@@ -1,66 +1,53 @@
-import { Router } from "express";
+import express from "express";
+import Product from "../models/Product.js"; // Importa o Model
 
-const router = Router();
+const router = express.Router();
 
-console.log("Arquivo productRoutes carregado");
+// 🟢 ROTA 1: CADASTRAR UM NOVO PRODUTO (POST /produto)
+router.post("/", async (req, res) => {
+  try {
+    const { title, category, price, image, description } = req.body;
 
-
-    
-
-const products = [
-    {
-        id: 1,
-        name: "Notebook Gamer",
-        price: 5000
-    },
-    {
-        id: 2,
-        name: "Penis Gamer",
-        price: 200
-    },
-    {
-        id: 3,
-        name: "Xota Gamer",
-        price: 325
-    },
-    {
-        id: 4,
-        name: "Bigode Gamer",
-        price: 250
-    },
-    {
-        id: 5,
-        name: "Judeu Gamer",
-        price: 20000
-    },
-    {
-        id: 6,
-        name: "Japones Gamer",
-        price: 1500
+    // Validação básica dos campos obrigatórios
+    if (!title || !category || !price || !image) {
+      return res.status(400).json({ 
+        message: "Por favor, preencha todos os campos obrigatórios (title, category, price, image)." 
+      });
     }
-];
 
-router.get("/", (req, res) => {
-    console.log("Entrou na rota GET /products");
+    // Cria o novo produto no banco de dados
+    const newProduct = await Product.create({
+      title,
+      category,
+      price,
+      image,
+      description,
+    });
 
-    res.json(products);
+    // Retorna o produto criado com status 201 (Created)
+    return res.status(201).json({
+      message: "Produto cadastrado com sucesso!",
+      product: newProduct,
+    });
+
+  } catch (error) {
+    console.error("Erro ao cadastrar produto:", error);
+    return res.status(500).json({ 
+      message: "Erro interno no servidor ao cadastrar produto.",
+      error: error.message 
+    });
+  }
 });
 
-router.post('/', (req, res) => {
-
-    console.log('Entrou na rota POST /newProducts');
-
-    const newProduct = {
-      id: products.length + 1,
-      name: req.body.name,
-      price: req.body.price
-    };
-    products.push(newProduct);
-    res.status(201).json({
-        message: "produto adicionado com sucesso",
-        product: newProduct
-      });
-      
-  });
+// 🔵 ROTA 2: LISTAR TODOS OS PRODUTOS (GET /produto)
+router.get("/", async (req, res) => {
+  try {
+    const products = await Product.find(); // Busca todos os registros
+    return res.status(200).json(products);
+  } catch (error) {
+    console.error("Erro ao buscar produtos:", error);
+    return res.status(500).json({ message: "Erro ao buscar produtos." });
+  }
+});
 
 export default router;

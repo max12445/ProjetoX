@@ -3,8 +3,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
 import dns from "node:dns";
-import Produtosroutes from "./routes/Productroutes.js"; // Caminho corrigido
+import Produtosroutes from "./routes/Productroutes.js";
 import connectDatabase from "./database/conecction.js";
 
 // Configurações de rede/DNS para conexão com MongoDB Atlas
@@ -14,11 +15,12 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 2. Conecta ao banco (apenas UMA vez)
-connectDatabase();
-
 // Middlewares
-app.use(express.json());
+app.use(cors()); // Libera o acesso para o Frontend
+app.use(express.json()); // Permite o servidor entender requisições em JSON
+
+// Conecta ao banco de dados
+connectDatabase();
 
 console.log("ESTE É O SERVER.JS DA TECHSTORE");
 
