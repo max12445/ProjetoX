@@ -51,3 +51,26 @@ router.get("/", async (req, res) => {
 });
 
 export default router;
+
+// Exemplo de verificação simples de permissão no Productroutes.js
+
+// 🔴 ROTA DE EXCLUSÃO DE PRODUTO (DELETE /produto/:id)
+router.delete("/:id", async (req, res) => {
+  try {
+    const { userRole } = req.body; // Em um sistema completo, isso viria do Token JWT
+
+    // Apenas Gerente e Fornecedor podem remover produtos
+    if (userRole !== "gerente" && userRole !== "fornecedor") {
+      return res.status(403).json({ 
+        message: "Acesso negado. Apenas gerentes ou fornecedores podem excluir produtos." 
+      });
+    }
+
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "Produto removido com sucesso!" });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao remover produto." });
+  }
+});

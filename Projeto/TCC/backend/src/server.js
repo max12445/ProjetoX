@@ -1,14 +1,17 @@
 import dotenv from "dotenv";
-// 1. O dotenv.config() DEVE ser a primeira linha executada no arquivo!
 dotenv.config();
 
 import express from "express";
 import cors from "cors";
 import dns from "node:dns";
+
+// 📦 IMPORTS DAS ROTAS E BANCO
 import Produtosroutes from "./routes/Productroutes.js";
+import Userroutes from "./routes/Userroutes.js";
+import Orderroutes from "./routes/Orderroutes.js"; // 👈 ADICIONE ESTA LINHA AQUI!
 import connectDatabase from "./database/conecction.js";
 
-// Configurações de rede/DNS para conexão com MongoDB Atlas
+// Configurações de DNS para o MongoDB Atlas
 dns.setDefaultResultOrder("ipv4first");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
@@ -16,24 +19,21 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
-app.use(cors()); // Libera o acesso para o Frontend
-app.use(express.json()); // Permite o servidor entender requisições em JSON
+app.use(cors());
+app.use(express.json());
 
-// Conecta ao banco de dados
+// Conexão com o Banco
 connectDatabase();
 
 console.log("ESTE É O SERVER.JS DA TECHSTORE");
 
-// Rotas
+// Rotas da API
 app.use("/produto", Produtosroutes);
-console.log("Rotas de produtos carregadas");
+app.use("/usuario", Userroutes);
+app.use("/pedido", Orderroutes); // Agora o Node.js vai reconhecer!
 
 app.get("/", (req, res) => {
   res.json({ message: "API está funcionando!" });
-});
-
-app.get("/teste", (req, res) => {
-  res.send("Servidor de teste funcionando!");
 });
 
 // Inicialização do Servidor
