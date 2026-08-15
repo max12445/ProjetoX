@@ -1,10 +1,7 @@
-import express from "express";
 import Order from "../models/Order.js";
 
-const router = express.Router();
-
-// 🟢 CREATE (POST /pedido)
-router.post("/", async (req, res) => {
+// 🟢 Criar Pedido
+export const createOrder = async (req, res) => {
   try {
     const { user, items, totalPrice, shippingAddress } = req.body;
 
@@ -17,10 +14,10 @@ router.post("/", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Erro ao criar pedido." });
   }
-});
+};
 
-// 🔵 READ ALL (GET /pedido) - Listar todos os pedidos
-router.get("/", async (req, res) => {
+// 🔵 Listar Todos os Pedidos
+export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find()
       .populate("user", "name email")
@@ -29,10 +26,10 @@ router.get("/", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Erro ao buscar pedidos." });
   }
-});
+};
 
-// 🔵 READ BY USER (GET /pedido/usuario/:userId)
-router.get("/usuario/:userId", async (req, res) => {
+// 🔵 Listar Pedidos de um Usuário
+export const getOrdersByUser = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.params.userId })
       .populate("items.product", "title price image");
@@ -40,10 +37,10 @@ router.get("/usuario/:userId", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Erro ao buscar histórico." });
   }
-});
+};
 
-// 🟡 UPDATE STATUS (PUT /pedido/:id) - Alterar status do pedido
-router.put("/:id", async (req, res) => {
+// 🟡 Atualizar Status do Pedido
+export const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const updatedOrder = await Order.findByIdAndUpdate(
@@ -57,10 +54,10 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Erro ao atualizar pedido." });
   }
-});
+};
 
-// 🔴 DELETE (DELETE /pedido/:id) - Cancelar/Excluir pedido
-router.delete("/:id", async (req, res) => {
+// 🔴 Deletar Pedido
+export const deleteOrder = async (req, res) => {
   try {
     const deletedOrder = await Order.findByIdAndDelete(req.params.id);
     if (!deletedOrder) return res.status(404).json({ message: "Pedido não encontrado." });
@@ -69,6 +66,4 @@ router.delete("/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Erro ao remover pedido." });
   }
-});
-
-export default router;
+};

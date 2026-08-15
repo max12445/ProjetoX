@@ -4,29 +4,32 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "O nome é obrigatório"],
+      required: [true, "O nome é obrigatório."],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "O e-mail é obrigatório"],
-      unique: true, // Não permite dois usuários com o mesmo e-mail
-      lowercase: true,
-      trim: true,
+      required: [true, "O e-mail é obrigatório."],
+      unique: true,
+      trim: true, 
     },
     password: {
       type: String,
-      required: [true, "A senha é obrigatória"],
+      required: [true, "A senha é obrigatória."],
+      minlength: [5, "A senha deve ter pelo menos 6 caracteres."],
     },
     role: {
       type: String,
-      enum: ["cliente", "fornecedor", "gerente"],
-      default: "cliente", // Se não informar, assume que é cliente
+      enum: {
+        values: ["cliente", "comerciante", "admin"],
+        message: "{VALUE} não é uma permissão válida.",
+      },
+      default: "cliente",
+      trim: true,
+      lowercase: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("User", userSchema);
