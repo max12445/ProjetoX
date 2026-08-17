@@ -1,125 +1,125 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { registerUser } from "../services/userService";
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 export const Register: React.FC = () => {
-  const navigate = useNavigate();
-
-  const [nome, setNome] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
-
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("cliente"); // Valor padrão
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage(null);
-
-    if (!nome || !email || !senha || !confirmarSenha) {
-      setMessage({ text: "Preencha todos os campos obrigatórios.", type: "error" });
-      return;
-    }
-
-    if (senha !== confirmarSenha) {
-      setMessage({ text: "As senhas não coincidem.", type: "error" });
-      return;
-    }
+    setError(null);
+    setLoading(true);
 
     try {
-      setLoading(true);
-      await registerUser({ nome, email, senha });
+      await axios.post("http://localhost:3001/user", {
+        name,
+        email,
+        password,
+        role, // Enviando a permissão escolhida para o backend
+      });
 
-      setMessage({ text: "Conta criada com sucesso! Redirecionando para o login...", type: "success" });
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || "Erro ao criar conta. Tente novamente.";
-      setMessage({ text: errorMsg, type: "error" });
+      alert("Usuário cadastrado com sucesso! Faça login para continuar.");
+      navigate("/login");
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "Erro ao cadastrar usuário. Tente novamente."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto my-12 px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Criar uma Conta</h2>
-        <p className="text-gray-500 text-sm mb-6 text-center">Cadastre-se para realizar suas compras na TechStore.</p>
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Criar Conta</h2>
+        <p className="text-sm text-gray-500 text-center mb-6">
+          Escolha o tipo de perfil para testar as funcionalidades da plataforma.
+        </p>
 
-        {message && (
-          <div
-            className={`p-4 mb-6 rounded-xl text-sm font-medium border ${
-              message.type === "success"
-                ? "bg-green-50 text-green-800 border-green-200"
-                : "bg-red-50 text-red-800 border-red-200"
-            }`}
-          >
-            {message.text}
+        {error && (
+          <div className="p-3 mb-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo *</label>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              Nome Completo
+            </label>
             <input
               type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
               placeholder="Ex: Maria Silva"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">E-mail *</label>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              E-mail
+            </label>
             <input
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
               placeholder="seu@email.com"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Senha *</label>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              Senha
+            </label>
             <input
               type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
             />
           </div>
 
+          {/* Campo para escolher a permissão do usuário */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Confirmar Senha *</label>
-            <input
-              type="password"
-              value={confirmarSenha}
-              onChange={(e) => setConfirmarSenha(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-            />
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+              Tipo de Perfil (Para Testes)
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white transition-all"
+            >
+              <option value="cliente">🛒 Cliente (Apenas compra e navegação)</option>
+              <option value="comerciante">🏪 Comerciante (Cadastra produtos pendentes)</option>
+              <option value="admin">🛡️ Administrador (Aprova produtos e gerencia tudo)</option>
+            </select>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm transition-colors text-sm mt-2 ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="w-full mt-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-sm disabled:opacity-50"
           >
             {loading ? "Cadastrando..." : "Criar Conta"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Já tem uma conta?{" "}
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Já possui conta?{" "}
           <Link to="/login" className="text-blue-600 font-semibold hover:underline">
             Entrar
           </Link>

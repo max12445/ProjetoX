@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   getPendingProducts,
   updateProductStatus,
-  Product,
+  type Product,
 } from "../services/productService";
 
 export const AdminDashboard: React.FC = () => {

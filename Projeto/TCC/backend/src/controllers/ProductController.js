@@ -1,21 +1,44 @@
 import Product from "../models/Product.js";
 
-// GET /produto - Apenas produtos APROVADOS na Home
+// GET /produto - Busca produtos APROVADOS (e antigos sem status) para exibir na Home
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({ status: "aprovado" }).sort({ createdAt: -1 });
+    const products = await Product.find({
+      $or: [
+        { status: "aprovado" },
+        { status: { $exists: false } } // Exibe produtos cadastrados antes do sistema de aprovação
+      ]
+    }).sort({ createdAt: -1 });
+
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: "Erro ao buscar produtos", error: error.message });
   }
 };
 
-// GET /produto/pendentes - Apenas para o ADMIN visualizar aprovações
+// GET /produto/:id - Buscar um produto específico pelo ID
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Produto não encontrado." });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao buscar o produto.", error: error.message });
+  }
+};
+
+// GET /produto/pendentes - Apenas para o ADMIN visualizar pendentes de aprovação
 export const getPendingProducts = async (req, res) => {
   try {
     const pendingProducts = await Product.find({ status: "pendente" })
       .populate("comercianteId", "name email")
       .sort({ createdAt: -1 });
+
     res.status(200).json(pendingProducts);
   } catch (error) {
     res.status(500).json({ message: "Erro ao buscar produtos pendentes", error: error.message });
@@ -27,6 +50,7 @@ export const createProduct = async (req, res) => {
   try {
     const { title, category, price, image, description, userRole, userId } = req.body;
 
+    // Se quem cadastrou for admin, já publica direto. Se for comerciante, entra como pendente.
     const status = userRole === "admin" ? "aprovado" : "pendente";
 
     const newProduct = new Product({
@@ -58,7 +82,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// PATCH /produto/:id/status - Aprovar ou Rejeitar produto
+// PATCH /produto/:id/status - Aprovar ou Rejeitar produto (Painel Admin)
 export const updateProductStatus = async (req, res) => {
   try {
     const { id } = req.params;
