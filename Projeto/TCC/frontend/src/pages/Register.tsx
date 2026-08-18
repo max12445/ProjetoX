@@ -18,11 +18,12 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:3001/user", {
+      // 🟢 Rota ajustada para /usuario (conforme definido no server.js)
+      await axios.post("http://localhost:3001/usuario/register", {
         name,
         email,
         password,
-        role, // Enviando a permissão escolhida para o backend
+        role,
       });
 
       alert("Usuário cadastrado com sucesso! Faça login para continuar.");
