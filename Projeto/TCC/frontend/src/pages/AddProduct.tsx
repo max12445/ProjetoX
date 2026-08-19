@@ -11,20 +11,40 @@ export const AddProduct: React.FC = () => {
   const [image, setImage] = useState("");
   const [description, setDescription] = useState("");
 
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
   const [loading, setLoading] = useState(false);
+
+  // Categorias disponíveis
+  const categories = [
+    { value: "eletronicos", label: "💻 Eletrônicos" },
+    { value: "informatica", label: "🖥️ Informática" },
+    { value: "celulares", label: "📱 Celulares" },
+    { value: "acessorios", label: "🔌 Acessórios" },
+    { value: "perifericos", label: "⌨️ Periféricos" },
+    { value: "games", label: "🎮 Games" },
+    { value: "audio", label: "🎧 Áudio" },
+    { value: "outros", label: "📦 Outros" },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
     if (!title || !category || !price || !image) {
-      setMessage({ text: "Por favor, preencha todos os campos obrigatórios (*).", type: "error" });
+      setMessage({
+        text: "Por favor, preencha todos os campos obrigatórios (*).",
+        type: "error",
+      });
       return;
     }
 
     try {
       setLoading(true);
+
       await createProduct({
         title,
         category,
@@ -33,14 +53,23 @@ export const AddProduct: React.FC = () => {
         description,
       });
 
-      setMessage({ text: "Produto cadastrado com sucesso! Redirecionando...", type: "success" });
+      setMessage({
+        text: "Produto cadastrado com sucesso! Redirecionando...",
+        type: "success",
+      });
 
       setTimeout(() => {
         navigate("/");
       }, 1500);
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || "Erro ao conectar com o servidor.";
-      setMessage({ text: errorMsg, type: "error" });
+      const errorMsg =
+        error.response?.data?.message ||
+        "Erro ao conectar com o servidor.";
+
+      setMessage({
+        text: errorMsg,
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -49,8 +78,13 @@ export const AddProduct: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto my-10 px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Cadastrar Novo Produto</h2>
-        <p className="text-gray-500 text-sm mb-6">Insiro as informações necessárias para registrar o produto no sistema.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Cadastrar Novo Produto
+        </h2>
+
+        <p className="text-gray-500 text-sm mb-6">
+          Insiro as informações necessárias para registrar o produto no sistema.
+        </p>
 
         {message && (
           <div
@@ -65,8 +99,12 @@ export const AddProduct: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Título */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Título do Produto *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Título do Produto *
+            </label>
+
             <input
               type="text"
               value={title}
@@ -76,33 +114,58 @@ export const AddProduct: React.FC = () => {
             />
           </div>
 
+          {/* Categoria e preço */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Categoria */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Categoria *</label>
-              <input
-                type="text"
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Categoria *
+              </label>
+
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Ex: Periféricos"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-              />
+                required
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm bg-white"
+              >
+                <option value="" disabled>
+                  Selecione uma categoria
+                </option>
+
+                {categories.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Preço */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Preço (R$) *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Preço (R$) *
+              </label>
+
               <input
                 type="number"
                 step="0.01"
+                min="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setPrice(e.target.value ? Number(e.target.value) : "")
+                }
                 placeholder="Ex: 299.90"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
               />
             </div>
           </div>
 
+          {/* Imagem */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">URL da Imagem *</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              URL da Imagem *
+            </label>
+
             <input
               type="url"
               value={image}
@@ -112,8 +175,12 @@ export const AddProduct: React.FC = () => {
             />
           </div>
 
+          {/* Descrição */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Descrição
+            </label>
+
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -123,6 +190,7 @@ export const AddProduct: React.FC = () => {
             />
           </div>
 
+          {/* Botões */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -131,6 +199,7 @@ export const AddProduct: React.FC = () => {
             >
               Cancelar
             </button>
+
             <button
               type="submit"
               disabled={loading}

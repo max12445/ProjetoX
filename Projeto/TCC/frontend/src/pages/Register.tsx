@@ -6,7 +6,8 @@ export const Register: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("cliente"); // Valor padrão
+  const [role, setRole] = useState("cliente");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +19,6 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      // 🟢 Rota ajustada para /usuario (conforme definido no server.js)
       await axios.post("http://localhost:3001/usuario/register", {
         name,
         email,
@@ -30,7 +30,8 @@ export const Register: React.FC = () => {
       navigate("/login");
     } catch (err: any) {
       setError(
-        err.response?.data?.message || "Erro ao cadastrar usuário. Tente novamente."
+        err.response?.data?.message ||
+          "Erro ao cadastrar usuário. Tente novamente."
       );
     } finally {
       setLoading(false);
@@ -40,9 +41,13 @@ export const Register: React.FC = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Criar Conta</h2>
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          Criar Conta
+        </h2>
+
         <p className="text-sm text-gray-500 text-center mb-6">
-          Escolha o tipo de perfil para testar as funcionalidades da plataforma.
+          Escolha o tipo de perfil para testar as funcionalidades da
+          plataforma.
         </p>
 
         {error && (
@@ -52,10 +57,12 @@ export const Register: React.FC = () => {
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
+          {/* Nome */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               Nome Completo
             </label>
+
             <input
               type="text"
               required
@@ -66,10 +73,12 @@ export const Register: React.FC = () => {
             />
           </div>
 
+          {/* E-mail */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               E-mail
             </label>
+
             <input
               type="email"
               required
@@ -80,36 +89,60 @@ export const Register: React.FC = () => {
             />
           </div>
 
+          {/* Senha */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               Senha
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-              placeholder="••••••••"
-            />
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2.5 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                placeholder="••••••••"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
           </div>
 
-          {/* Campo para escolher a permissão do usuário */}
+          {/* Tipo de Perfil */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
               Tipo de Perfil (Para Testes)
             </label>
+
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white transition-all"
             >
-              <option value="cliente">🛒 Cliente (Apenas compra e navegação)</option>
-              <option value="comerciante">🏪 Comerciante (Cadastra produtos pendentes)</option>
-              <option value="admin">🛡️ Administrador (Aprova produtos e gerencia tudo)</option>
+              <option value="cliente">
+                🛒 Cliente (Apenas compra e navegação)
+              </option>
+
+              <option value="comerciante">
+                🏪 Comerciante (Cadastra produtos pendentes)
+              </option>
+
+              <option value="admin">
+                🛡️ Administrador (Aprova produtos e gerencia tudo)
+              </option>
             </select>
           </div>
 
+          {/* Botão */}
           <button
             type="submit"
             disabled={loading}
@@ -121,7 +154,10 @@ export const Register: React.FC = () => {
 
         <p className="text-center text-xs text-gray-500 mt-6">
           Já possui conta?{" "}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+          <Link
+            to="/login"
+            className="text-blue-600 font-semibold hover:underline"
+          >
             Entrar
           </Link>
         </p>
