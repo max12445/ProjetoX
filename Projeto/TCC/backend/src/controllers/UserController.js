@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 // 🟢 Registrar Usuário
@@ -52,34 +53,38 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
-        message: "E-mail ou senha inválidos.",
+        message: "E-mail ou senha inválidos."
       });
     }
 
-    // Compara a senha digitada com a senha criptografada
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({
-        message: "E-mail ou senha inválidos.",
-      });
-    }
-
-    // Não envia a senha para o frontend
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Cria o token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "2h",
+      }
+    );
 
     return res.status(200).json({
       message: "Login realizado com sucesso!",
-      user: userResponse,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
-  } catch (error) {
-    console.error(error);
 
+  } catch (error) {
     return res.status(500).json({
-      message: "Erro ao realizar login.",
+      message: "Erro ao realizar login."
     });
   }
 };

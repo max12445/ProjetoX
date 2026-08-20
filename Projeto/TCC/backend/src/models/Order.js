@@ -1,74 +1,60 @@
-import express from "express";
-import Order from "../models/Order.js";
+import mongoose from "mongoose";
 
-const router = express.Router();
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-// 🟢 CREATE (POST /pedido)
-router.post("/", async (req, res) => {
-  try {
-    const { user, items, totalPrice, shippingAddress } = req.body;
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
 
-    if (!user || !items || items.length === 0 || !totalPrice || !shippingAddress) {
-      return res.status(400).json({ message: "Dados do pedido incompletos." });
-    }
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
 
-    const newOrder = await Order.create({ user, items, totalPrice, shippingAddress });
-    return res.status(201).json({ message: "Pedido criado!", order: newOrder });
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao criar pedido." });
-  }
-});
+        price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+      },
+    ],
 
-// 🔵 READ ALL (GET /pedido) - Listar todos os pedidos
-router.get("/", async (req, res) => {
-  try {
-    const orders = await Order.find()
-      .populate("user", "name email")
-      .populate("items.product", "title price image");
-    return res.status(200).json(orders);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao buscar pedidos." });
-  }
-});
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-// 🔵 READ BY USER (GET /pedido/usuario/:userId)
-router.get("/usuario/:userId", async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.params.userId })
-      .populate("items.product", "title price image");
-    return res.status(200).json(orders);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao buscar histórico." });
-  }
-});
+    shippingAddress: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-// 🟡 UPDATE STATUS (PUT /pedido/:id) - Alterar status do pedido
-router.put("/:id", async (req, res) => {
-  try {
-    const { status } = req.body;
-    const updatedOrder = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-    if (!updatedOrder) return res.status(404).json({ message: "Pedido não encontrado." });
+    status: {
+      type: String,
+      enum: [
+        "pendente",
+        "processando",
+        "enviado",
+        "entregue",
+        "cancelado",
+      ],
+      default: "pendente",
+    },
+  },
+  { timestamps: true }
+);
 
-    return res.status(200).json({ message: "Status do pedido atualizado!", order: updatedOrder });
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao atualizar pedido." });
-  }
-});
-
-// 🔴 DELETE (DELETE /pedido/:id) - Cancelar/Excluir pedido
-router.delete("/:id", async (req, res) => {
-  try {
-    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
-    if (!deletedOrder) return res.status(404).json({ message: "Pedido não encontrado." });
-
-    return res.status(200).json({ message: "Pedido cancelado/removido com sucesso!" });
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao remover pedido." });
-  }
-});
-
-export default router;
+export default mongoose.model("Order", orderSchema);
