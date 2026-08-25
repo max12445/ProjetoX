@@ -6,13 +6,15 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/UserController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { requireRole } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/", getUsers);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+router.get("/", authMiddleware, requireRole("admin"), getUsers);
+router.put("/:id", authMiddleware, updateUser);
+router.delete("/:id", authMiddleware, requireRole("admin"), deleteUser);
 
 export default router;

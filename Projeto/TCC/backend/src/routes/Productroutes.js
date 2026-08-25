@@ -7,14 +7,16 @@ import {
   updateProductStatus,
   deleteProduct,
 } from "../controllers/ProductController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { requireRole } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", getProducts);
-router.get("/pendentes", getPendingProducts); 
+router.get("/pendentes", authMiddleware, requireRole("admin"), getPendingProducts);
+router.post("/", authMiddleware, requireRole("admin", "comerciante"), createProduct);
 router.get("/:id", getProductById);
-router.post("/", createProduct);
-router.patch("/:id/status", updateProductStatus);
-router.delete("/:id", deleteProduct);
+router.patch("/:id/status", authMiddleware, requireRole("admin"), updateProductStatus);
+router.delete("/:id", authMiddleware, requireRole("admin"), deleteProduct);
 
 export default router;
