@@ -1,16 +1,10 @@
 import axios from "axios";
+import type { Product } from "../types/product";
+
+// Exporta o tipo também para arquivos que já importavam Product daqui
+export type { Product } from "../types/product";
 
 const API_URL = "http://localhost:3001/produto";
-
-export interface Product {
-  _id?: string;
-  title: string;
-  category: string;
-  price: number;
-  image: string;
-  description?: string;
-  status?: "aprovado" | "pendente" | "rejeitado";
-}
 
 export const getProducts = async (): Promise<Product[]> => {
   const response = await axios.get(API_URL);
@@ -22,7 +16,9 @@ export const getPendingProducts = async (): Promise<Product[]> => {
   return response.data;
 };
 
-export const createProduct = async (productData: Omit<Product, "_id">) => {
+export const createProduct = async (
+  productData: Omit<Product, "_id">
+) => {
   const userStored = localStorage.getItem("user");
   const user = userStored ? JSON.parse(userStored) : null;
 
@@ -31,15 +27,24 @@ export const createProduct = async (productData: Omit<Product, "_id">) => {
     userRole: user?.role || "cliente",
     userId: user?.id || user?._id || null,
   });
+
   return response.data;
 };
 
-export const updateProductStatus = async (id: string, status: "aprovado" | "rejeitado") => {
-  const response = await axios.patch(`${API_URL}/${id}/status`, { status });
+export const updateProductStatus = async (
+  id: string,
+  status: "aprovado" | "rejeitado"
+) => {
+  const response = await axios.patch(
+    `${API_URL}/${id}/status`,
+    { status }
+  );
+
   return response.data;
 };
 
 export const deleteProduct = async (id: string) => {
   const response = await axios.delete(`${API_URL}/${id}`);
+
   return response.data;
 };

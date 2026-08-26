@@ -4,6 +4,7 @@ import { Home } from "./pages/Home";
 import { AddProduct } from "./pages/AddProduct";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { Products } from "./pages/Products";
 import { AdminDashboard } from "./pages/AdminDashboard";
 
 function App() {

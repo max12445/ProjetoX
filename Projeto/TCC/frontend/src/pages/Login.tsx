@@ -12,9 +12,11 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // 1. Evita o recarregamento da página e reseta a mensagem
     e.preventDefault();
     setMessage(null);
 
+    // 2. Validação inicial
     if (!email || !senha) {
       setMessage({ text: "Preencha todos os campos.", type: "error" });
       return;
@@ -24,7 +26,12 @@ export const Login: React.FC = () => {
       setLoading(true);
       const data = await loginUser({ email, senha });
 
-      // Salva os dados do usuário/token no localStorage
+      // 3. Salva o Token isolado no localStorage (crucial para o authMiddleware)
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // 4. Salva os dados do usuário
       localStorage.setItem("user", JSON.stringify(data.user || data));
 
       setMessage({ text: "Login realizado com sucesso! Entrando...", type: "success" });
