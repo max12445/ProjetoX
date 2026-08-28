@@ -4,12 +4,14 @@ import {
   updateProductStatus,
   type Product,
 } from "../services/productService";
+import { useProductContext } from "../context/ProductContext";
 
 export const AdminDashboard: React.FC = () => {
   const [pendingProducts, setPendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const { triggerRefresh } = useProductContext();
 
   useEffect(() => {
     fetchPendingProducts();
@@ -34,6 +36,11 @@ export const AdminDashboard: React.FC = () => {
       await updateProductStatus(id, status);
       // Remove o produto da lista local após a ação
       setPendingProducts((prev) => prev.filter((product) => product._id !== id));
+      
+      // ✅ ATUALIZAR: Se foi aprovado, dispara refresh dos produtos
+      if (status === "aprovado") {
+        triggerRefresh();
+      }
     } catch (err: any) {
       alert(`Erro ao tentar ${status === "aprovado" ? "aprovar" : "rejeitar"} o produto.`);
     } finally {

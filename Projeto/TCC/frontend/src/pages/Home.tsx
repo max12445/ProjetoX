@@ -1,33 +1,43 @@
-import React, { useState } from "react";
-
-// Tipagem de exemplo para os produtos
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-}
+import React, { useEffect, useState } from "react";
+import { getProducts } from "../services/productService";
+import { useProductContext } from "../context/ProductContext";
+import type { Product } from "../types/product";
 
 export const Home: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [selectedCategory, setSelectedCategory] = useState("todos");
+  const [loading, setLoading] = useState(true);
+  const { refreshKey } = useProductContext();
 
-  // Categorias disponíveis para filtro
-  const categories = ["Todos", "Eletrônicos", "Roupas", "Acessórios", "Alimentos"];
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Dados fictícios para demonstração
-  const products: Product[] = [
-    { id: "1", name: "Fone de Ouvido Sem Fio", category: "Eletrônicos", price: 199.9, image: "https://via.placeholder.com/300" },
-    { id: "2", name: "Camiseta Algodão Premium", category: "Roupas", price: 79.9, image: "https://via.placeholder.com/300" },
-    { id: "3", name: "Relógio Inteligente Smart", category: "Acessórios", price: 349.0, image: "https://via.placeholder.com/300" },
-    { id: "4", name: "Café Especial 500g", category: "Alimentos", price: 45.0, image: "https://via.placeholder.com/300" },
+    loadProducts();
+  }, [refreshKey]); // ✅ Re-fetch quando um produto é aprovado
+
+  // Cria as categorias automaticamente
+  const categories = [
+    "todos",
+    ...Array.from(new Set(products.map((product) => product.category))),
   ];
 
   // Lógica de filtragem por busca e categoria
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
+    const matchesSearch = product.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "todos" || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -74,7 +84,7 @@ export const Home: React.FC = () => {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                {cat}
+                {cat === "todos" ? "Todos" : cat.charAt(0).toUpperCase() + cat.slice(1)}
               </button>
             ))}
           </div>
@@ -84,7 +94,11 @@ export const Home: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-6">Produtos em Destaque</h2>
 
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+              <p className="text-gray-500 text-sm">Carregando produtos...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
               <p className="text-gray-500 text-sm">Nenhum produto encontrado com os filtros selecionados.</p>
             </div>
@@ -92,12 +106,12 @@ export const Home: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (
                 <div
-                  key={product.id}
+                  key={product._id}
                   className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
                   <img
                     src={product.image}
-                    alt={product.name}
+                    alt={product.title}
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-4 flex flex-col flex-grow justify-between">
@@ -106,12 +120,12 @@ export const Home: React.FC = () => {
                         {product.category}
                       </span>
                       <h3 className="font-semibold text-gray-900 mt-1 line-clamp-1">
-                        {product.name}
+                        {product.title}
                       </h3>
                     </div>
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-lg font-bold text-gray-900">
-                        R$ {product.price.toFixed(2)}
+                        R$ {product.price.toFixed(2).replace(".", ",")}
                       </span>
                       <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
                         Ver Detalhes

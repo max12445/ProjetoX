@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { getProducts } from "../services/productService";
+import { useProductContext } from "../context/ProductContext";
 import type { Product } from "../types/product";
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("todos");
+  const { refreshKey } = useProductContext();
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -24,7 +25,7 @@ export const Products: React.FC = () => {
     };
 
     loadProducts();
-  }, []);
+  }, [refreshKey]); // ✅ Re-fetch quando refreshKey muda
 
   // Cria as categorias automaticamente
   const categories = [
@@ -46,14 +47,10 @@ export const Products: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Cabeçalho */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12">
         <div className="max-w-6xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-3">
-            Produtos
-          </h1>
-
+          <h1 className="text-4xl font-bold mb-3">Produtos</h1>
           <p className="text-blue-100">
             Encontre os melhores produtos disponíveis na TechStore.
           </p>
@@ -61,10 +58,8 @@ export const Products: React.FC = () => {
       </section>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-
         {/* Pesquisa e filtros */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-8">
-
           <input
             type="text"
             value={search}
@@ -122,20 +117,17 @@ export const Products: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900">
                 Todos os produtos
               </h2>
-
               <span className="text-sm text-gray-500">
                 {filteredProducts.length} produto(s)
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
               {filteredProducts.map((product) => (
                 <div
                   key={product._id}
                   className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition"
                 >
-
                   {/* Imagem */}
                   <div className="h-52 bg-gray-100 overflow-hidden">
                     <img
@@ -147,7 +139,6 @@ export const Products: React.FC = () => {
 
                   {/* Informações */}
                   <div className="p-4">
-
                     <span className="text-xs font-semibold text-blue-600 uppercase">
                       {product.category}
                     </span>
@@ -157,22 +148,17 @@ export const Products: React.FC = () => {
                     </h3>
 
                     <div className="flex items-center justify-between mt-5">
-
                       <span className="text-lg font-bold text-gray-900">
                         R$ {product.price.toFixed(2).replace(".", ",")}
                       </span>
 
-                      <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
-                      >
+                      <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
                         Ver detalhes
                       </button>
-
                     </div>
                   </div>
                 </div>
               ))}
-
             </div>
           </>
         )}
