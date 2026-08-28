@@ -51,6 +51,20 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // ✅ Validar se email e senha foram fornecidos
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email e senha são obrigatórios.",
+      });
+    }
+
+    // ✅ Validar formato básico de email
+    if (!email.includes("@")) {
+      return res.status(400).json({
+        message: "Email inválido.",
+      });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -83,6 +97,7 @@ export const loginUser = async (req, res) => {
     });
 
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Erro ao realizar login."
     });
@@ -107,12 +122,20 @@ export const updateUser = async (req, res) => {
   try {
     const { name, email, role, password } = req.body;
 
-    const updateData = {
-      name,
-      email,
-      role,
-    };
+    // ✅ Validar que pelo menos um campo foi enviado
+    if (!name && !email && !role && !password) {
+      return res.status(400).json({
+        message: "Nenhum dado para atualizar.",
+      });
+    }
 
+    const updateData = {};
+
+    // ✅ Apenas incluir campos que foram fornecidos
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    
     // Só altera a senha se uma nova senha for enviada
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
