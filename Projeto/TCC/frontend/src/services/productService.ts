@@ -6,12 +6,17 @@ export type { Product } from "../types/product";
 
 const API_URL = "http://localhost:3001/produto";
 
-// ✅ Função auxiliar para obter headers com token
+// ✅ Função auxiliar para obter headers com token (para endpoints protegidos)
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
+  
+  if (!token) {
+    throw new Error("Token não encontrado. Faça login novamente.");
+  }
+  
   return {
     headers: {
-      Authorization: token ? `Bearer ${token}` : "",
+      Authorization: `Bearer ${token}`,
     },
   };
 };
@@ -22,7 +27,7 @@ export const getProducts = async (): Promise<Product[]> => {
 };
 
 export const getPendingProducts = async (): Promise<Product[]> => {
-  // ✅ Incluir token para endpoint protegido
+  // ✅ Incluir token para endpoint protegido (requer autenticação)
   const response = await axios.get(`${API_URL}/pendentes`, getAuthHeaders());
   return response.data;
 };
@@ -36,7 +41,7 @@ export const createProduct = async (
 
   // ✅ Validar se token existe antes de fazer requisição
   if (!token) {
-    throw new Error("Token não encontrado. Faça login novamente.");
+    throw new Error("Você precisa estar logado para cadastrar um produto.");
   }
 
   const response = await axios.post(
@@ -61,7 +66,7 @@ export const updateProductStatus = async (
   id: string,
   status: "aprovado" | "rejeitado"
 ) => {
-  // ✅ Incluir token para endpoint protegido
+  // ✅ Incluir token para endpoint protegido (requer admin)
   const response = await axios.patch(
     `${API_URL}/${id}/status`,
     { status },
@@ -72,7 +77,7 @@ export const updateProductStatus = async (
 };
 
 export const deleteProduct = async (id: string) => {
-  // ✅ Incluir token para endpoint protegido
+  // ✅ Incluir token para endpoint protegido (requer admin)
   const response = await axios.delete(
     `${API_URL}/${id}`,
     getAuthHeaders()
