@@ -1,15 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { logoutUser } from "../services/userService";
+
+const readUser = () => {
+  try {
+    const userStored = localStorage.getItem("user");
+    return userStored ? JSON.parse(userStored) : null;
+  } catch {
+    return null;
+  }
+};
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const userStored = localStorage.getItem("user");
-  const user = userStored ? JSON.parse(userStored) : null;
+  const [user, setUser] = useState(readUser);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    // Atualiza a Navbar quando o usuário loga/desloga em outras abas ou rotas
+    const handleStorage = () => setUser(readUser());
+    const handleAuthChange = () => setUser(readUser());
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("auth-change", handleAuthChange);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("auth-change", handleAuthChange);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // Ignora erro de logout; continua limpando o estado local
+    }
     localStorage.removeItem("user");
+    setUser(null);
+    window.dispatchEvent(new Event("auth-change"));
     navigate("/login");
-    window.location.reload();
   };
 
   return (

@@ -2,37 +2,32 @@ import jwt from "jsonwebtoken";
 
 export const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.token;
 
-  // ✅ Validar se header existe
-  if (!authHeader) {
-    return res.status(401).json({
-      message: "Token não informado.",
-    });
+  // ✅ Obter o token do cookie httpOnly OU do header Authorization
+  let token = cookieToken;
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
   }
 
-  // ✅ Validar que começa com "Bearer "
-  if (!authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({
-      message: "Formato inválido. Use: Authorization: Bearer <token>",
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  // ✅ Validar se token não é vazio
+  // ✅ Validar se token existe
   if (!token) {
     return res.status(401).json({
-      message: "Token vazio.",
+      message: "Token não informado.",
+      code: "NO_TOKEN",
     });
   }
 
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      { algorithms: ["HS256"] }
     );
 
-    req.user = decoded;
+    // ✅ Apenas propagar campos conhecidos do payload
+    req.user = { id: decoded.id, role: decoded.role };
 
     next();
   } catch (error) {

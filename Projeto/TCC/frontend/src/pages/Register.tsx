@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { AxiosError } from "axios";
+import { registerUser } from "../services/userService";
 
 export const Register: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("cliente");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,20 +19,16 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:3001/usuario/register", {
-        name,
-        email,
-        password,
-        role,
-      });
+      await registerUser({ name, email, password });
 
       alert("Usuário cadastrado com sucesso! Faça login para continuar.");
       navigate("/login");
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Erro ao cadastrar usuário. Tente novamente."
-      );
+    } catch (error) {
+      const errorMsg =
+        error instanceof AxiosError
+          ? error.response?.data?.message
+          : undefined;
+      setError(errorMsg || "Erro ao cadastrar usuário. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -46,8 +42,7 @@ export const Register: React.FC = () => {
         </h2>
 
         <p className="text-sm text-gray-500 text-center mb-6">
-          Escolha o tipo de perfil para testar as funcionalidades da
-          plataforma.
+          Crie sua conta para navegar e comprar produtos na plataforma.
         </p>
 
         {error && (
@@ -115,31 +110,6 @@ export const Register: React.FC = () => {
                 {showPassword ? "🙈" : "👁️"}
               </button>
             </div>
-          </div>
-
-          {/* Tipo de Perfil */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              Tipo de Perfil (Para Testes)
-            </label>
-
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white transition-all"
-            >
-              <option value="cliente">
-                🛒 Cliente (Apenas compra e navegação)
-              </option>
-
-              <option value="comerciante">
-                🏪 Comerciante (Cadastra produtos pendentes)
-              </option>
-
-              <option value="admin">
-                🛡️ Administrador (Aprova produtos e gerencia tudo)
-              </option>
-            </select>
           </div>
 
           {/* Botão */}

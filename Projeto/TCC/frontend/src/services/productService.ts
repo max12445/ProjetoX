@@ -1,63 +1,37 @@
-import axios from "axios";
+import { api } from "./api";
 import type { Product } from "../types/product";
 
 // Exporta o tipo também para arquivos que já importavam Product daqui
 export type { Product } from "../types/product";
 
-const API_URL = "http://localhost:3001/produto";
+export interface Paginated<T> {
+  products?: T[];
+  data?: T[];
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+}
 
-// ✅ Função auxiliar para obter headers com token (para endpoints protegidos)
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  
-  if (!token) {
-    throw new Error("Token não encontrado. Faça login novamente.");
-  }
-  
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-};
-
-export const getProducts = async (): Promise<Product[]> => {
-  const response = await axios.get(API_URL);
+export const getProducts = async (page = 1, limit = 12): Promise<Paginated<Product>> => {
+  const response = await api.get("/produto", { params: { page, limit } });
   return response.data;
 };
 
-export const getPendingProducts = async (): Promise<Product[]> => {
-  // ✅ Incluir token para endpoint protegido (requer autenticação)
-  const response = await axios.get(`${API_URL}/pendentes`, getAuthHeaders());
+export const getProductById = async (id: string): Promise<Product> => {
+  const response = await api.get(`/produto/${id}`);
+  return response.data;
+};
+
+export const getPendingProducts = async (page = 1, limit = 20): Promise<Paginated<Product>> => {
+  // ✅ Cookie httpOnly já é enviado automaticamente com withCredentials
+  const response = await api.get("/produto/pendentes", { params: { page, limit } });
   return response.data;
 };
 
 export const createProduct = async (
   productData: Omit<Product, "_id">
 ) => {
-  const userStored = localStorage.getItem("user");
-  const user = userStored ? JSON.parse(userStored) : null;
-  const token = localStorage.getItem("token");
-
-  // ✅ Validar se token existe antes de fazer requisição
-  if (!token) {
-    throw new Error("Você precisa estar logado para cadastrar um produto.");
-  }
-
-  const response = await axios.post(
-    API_URL,
-    {
-      ...productData,
-      userRole: user?.role || "cliente",
-      userId: user?.id || user?._id || null,
-    },
-    {
-      // ✅ Incluir token no header Authorization
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  // ✅ A identidade (role e id) é extraída do JWT no backend, não do body.
+  // O cookie httpOnly é enviado automaticamente.
+  const response = await api.post("/produto", productData);
 
   return response.data;
 };
@@ -66,22 +40,8 @@ export const updateProductStatus = async (
   id: string,
   status: "aprovado" | "rejeitado"
 ) => {
-  // ✅ Incluir token para endpoint protegido (requer admin)
-  const response = await axios.patch(
-    `${API_URL}/${id}/status`,
-    { status },
-    getAuthHeaders()
-  );
-
-  return response.data;
-};
-
-export const deleteProduct = async (id: string) => {
-  // ✅ Incluir token para endpoint protegido (requer admin)
-  const response = await axios.delete(
-    `${API_URL}/${id}`,
-    getAuthHeaders()
-  );
+  // ✅ Cookie httpOnly já é enviado automaticamente
+  const response = await api.patch(`/produto/${id}/status`, { status });
 
   return response.data;
 };

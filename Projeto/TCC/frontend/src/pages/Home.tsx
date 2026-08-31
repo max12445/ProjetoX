@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getProducts } from "../services/productService";
 import { useProductContext } from "../context/ProductContext";
 import type { Product } from "../types/product";
@@ -13,8 +14,8 @@ export const Home: React.FC = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await getProducts();
-        setProducts(data);
+        const data = await getProducts(1, 100);
+        setProducts(data.products ?? data.data ?? []);
       } catch (error) {
         console.error(error);
       } finally {
@@ -125,11 +126,14 @@ export const Home: React.FC = () => {
                     </div>
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-lg font-bold text-gray-900">
-                        R$ {product.price.toFixed(2).replace(".", ",")}
+                        R$ {Number(product.price || 0).toFixed(2).replace(".", ",")}
                       </span>
-                      <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
+                      <Link
+                        to={`/produto/${product._id}`}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                      >
                         Ver Detalhes
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </div>

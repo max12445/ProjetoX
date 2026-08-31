@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   getPendingProducts,
   updateProductStatus,
@@ -13,22 +13,22 @@ export const AdminDashboard: React.FC = () => {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const { triggerRefresh } = useProductContext();
 
-  useEffect(() => {
-    fetchPendingProducts();
-  }, []);
-
-  const fetchPendingProducts = async () => {
+  const fetchPendingProducts = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
       const data = await getPendingProducts();
-      setPendingProducts(data);
-    } catch (err: any) {
+      setPendingProducts(data.products ?? data.data ?? []);
+      setError(null);
+    } catch {
       setError("Não foi possível carregar a lista de produtos pendentes.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPendingProducts();
+  }, [fetchPendingProducts]);
 
   const handleStatusUpdate = async (id: string, status: "aprovado" | "rejeitado") => {
     try {
@@ -41,7 +41,7 @@ export const AdminDashboard: React.FC = () => {
       if (status === "aprovado") {
         triggerRefresh();
       }
-    } catch (err: any) {
+    } catch {
       alert(`Erro ao tentar ${status === "aprovado" ? "aprovar" : "rejeitar"} o produto.`);
     } finally {
       setActionLoadingId(null);
@@ -146,7 +146,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
                       <span className="text-xs text-gray-400 font-medium">Preço sugerido</span>
                       <span className="text-xl font-extrabold text-emerald-600">
-                        R$ {Number(product.price).toFixed(2)}
+                        R$ {Number(product.price || 0).toFixed(2)}
                       </span>
                     </div>
                   </div>

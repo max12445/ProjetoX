@@ -3,16 +3,40 @@ import Product from "../models/Product.js";
 // GET /produto - Busca produtos APROVADOS (e antigos sem status) para exibir na Home
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({
-      $or: [
-        { status: "aprovado" },
-        { status: { $exists: false } } // Exibe produtos cadastrados antes do sistema de aprovação
-      ]
-    }).sort({ createdAt: -1 });
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 12, 1), 100);
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(products);
+    const [products, total] = await Promise.all([
+      Product.find({
+        $or: [
+          { status: "aprovado" },
+          { status: { $exists: false } } // Exibe produtos cadastrados antes do sistema de aprovação
+        ]
+      })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments({
+        $or: [
+          { status: "aprovado" },
+          { status: { $exists: false } }
+        ]
+      }),
+    ]);
+
+    res.status(200).json({
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar produtos", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar produtos." });
   }
 };
 
@@ -28,27 +52,50 @@ export const getProductById = async (req, res) => {
 
     res.status(200).json(product);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar o produto.", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar o produto." });
   }
 };
 
 // GET /produto/pendentes - Apenas para o ADMIN visualizar pendentes de aprovação
 export const getPendingProducts = async (req, res) => {
   try {
-    const pendingProducts = await Product.find({ status: "pendente" })
-      .populate("comercianteId", "name email")
-      .sort({ createdAt: -1 });
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+    const skip = (page - 1) * limit;
 
-    res.status(200).json(pendingProducts);
+    const [pendingProducts, total] = await Promise.all([
+      Product.find({ status: "pendente" })
+        .populate("comercianteId", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments({ status: "pendente" }),
+    ]);
+
+    res.status(200).json({
+      products: pendingProducts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar produtos pendentes", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar produtos pendentes." });
   }
 };
 
 // POST /produto - Cadastrar novo produto
 export const createProduct = async (req, res) => {
   try {
-    const { title, category, price, image, description, userRole, userId } = req.body;
+    const { title, category, price, image, description } = req.body;
+
+    // Identidade vem do JWT (req.user), não do corpo da requisição
+    const userRole = req.user.role;
+    const userId = req.user.id;
 
     // Se quem cadastrou for admin, já publica direto. Se for comerciante, entra como pendente.
     const status = userRole === "admin" ? "aprovado" : "pendente";
@@ -60,7 +107,7 @@ export const createProduct = async (req, res) => {
       image,
       description,
       status,
-      comercianteId: userId || null,
+      comercianteId: userId,
     });
 
     await newProduct.save();
@@ -78,7 +125,8 @@ export const createProduct = async (req, res) => {
       const messages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({ message: messages.join(" ") });
     }
-    res.status(500).json({ message: "Erro interno ao cadastrar produto.", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao cadastrar produto." });
   }
 };
 
@@ -106,7 +154,8 @@ export const updateProductStatus = async (req, res) => {
 
     res.status(200).json({ message: `Produto ${statusFormatted} com sucesso!`, product });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao atualizar status do produto", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao atualizar status do produto." });
   }
 };
 
@@ -114,9 +163,15 @@ export const updateProductStatus = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    await Product.findByIdAndDelete(id);
+    const deletedProduct = await Product.findByIdAndDelete(id);
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: "Produto não encontrado." });
+    }
+
     res.status(200).json({ message: "Produto excluído com sucesso." });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao excluir produto", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Erro ao excluir produto." });
   }
 };

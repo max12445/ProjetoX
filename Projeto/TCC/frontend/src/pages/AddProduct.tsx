@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 import { createProduct } from "../services/productService";
 
 export const AddProduct: React.FC = () => {
@@ -61,13 +62,14 @@ export const AddProduct: React.FC = () => {
       setTimeout(() => {
         navigate("/");
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       const errorMsg =
-        error.response?.data?.message ||
-        "Erro ao conectar com o servidor.";
+        error instanceof AxiosError
+          ? error.response?.data?.message
+          : undefined;
 
       setMessage({
-        text: errorMsg,
+        text: errorMsg || "Erro ao conectar com o servidor.",
         type: "error",
       });
     } finally {

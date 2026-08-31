@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 import { loginUser } from "../services/userService";
 
 export const Login: React.FC = () => {
@@ -24,25 +25,23 @@ export const Login: React.FC = () => {
 
     try {
       setLoading(true);
-      const data = await loginUser({ email, senha });
+      const data = await loginUser({ email, password: senha });
 
-      // 3. Salva o Token isolado no localStorage (crucial para o authMiddleware)
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
-      // 4. Salva os dados do usuário
+      // 4. Salva os dados do usuário (o token agora fica em cookie httpOnly no backend)
       localStorage.setItem("user", JSON.stringify(data.user || data));
+      window.dispatchEvent(new Event("auth-change"));
 
       setMessage({ text: "Login realizado com sucesso! Entrando...", type: "success" });
 
       setTimeout(() => {
         navigate("/");
-        window.location.reload(); // Recarrega para atualizar a Navbar com o nome do usuário
       }, 1000);
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || "E-mail ou senha incorretos.";
-      setMessage({ text: errorMsg, type: "error" });
+    } catch (error) {
+      const errorMsg =
+        error instanceof AxiosError
+          ? error.response?.data?.message
+          : undefined;
+      setMessage({ text: errorMsg || "E-mail ou senha incorretos.", type: "error" });
     } finally {
       setLoading(false);
     }

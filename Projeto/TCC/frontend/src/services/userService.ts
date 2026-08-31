@@ -1,27 +1,22 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:3001/usuario";
+import { api } from "./api";
 
 export interface RegisterData {
-  nome: string; // ou 'name' se o seu Controller no backend esperar em inglês
+  name: string;
   email: string;
-  senha: string; // ou 'password' se o seu Controller no backend esperar em inglês
+  password: string;
 }
 
 export const registerUser = async (data: RegisterData) => {
-  // Ajustado para chamar /register
-  const response = await axios.post(`${API_URL}/register`, {
-    name: data.nome,
-    email: data.email,
-    password: data.senha,
-  });
+  const response = await api.post("/usuario/register", data);
   return response.data;
 };
 
-export const loginUser = async (data: { email: string; senha: string }) => {
-  const response = await axios.post(`${API_URL}/login`, {
-    email: data.email,
-    password: data.senha,
-  });
+export const loginUser = async (data: { email: string; password: string }) => {
+  const response = await api.post("/usuario/login", data);
+  return response.data;
+};
+
+export const logoutUser = async () => {
+  const response = await api.post("/usuario/logout");
   return response.data;
 };

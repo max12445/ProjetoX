@@ -1,9 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import type { Product } from "../types/product";
+import React, { createContext, useContext, useState } from "react";
+import type { ReactNode } from "react";
 
 interface ProductContextType {
-  products: Product[];
-  setProducts: (products: Product[]) => void;
   refreshKey: number;
   triggerRefresh: () => void;
 }
@@ -11,7 +9,6 @@ interface ProductContextType {
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const triggerRefresh = () => {
@@ -20,12 +17,13 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   return (
-    <ProductContext.Provider value={{ products, setProducts, refreshKey, triggerRefresh }}>
+    <ProductContext.Provider value={{ refreshKey, triggerRefresh }}>
       {children}
     </ProductContext.Provider>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProductContext = () => {
   const context = useContext(ProductContext);
   if (!context) {
