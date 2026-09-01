@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AxiosError } from "axios";
-import { registerUser } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
+import { MailIcon, LockIcon, EyeIcon, EyeOffIcon } from "../components/Icons";
 
 export const Register: React.FC = () => {
+  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,7 @@ export const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await registerUser({ name, email, password });
+      await register({ name, email, password });
 
       alert("Usuário cadastrado com sucesso! Faça login para continuar.");
       navigate("/login");
@@ -28,106 +30,94 @@ export const Register: React.FC = () => {
         error instanceof AxiosError
           ? error.response?.data?.message
           : undefined;
-      setError(errorMsg || "Erro ao cadastrar usuário. Tente novamente.");
+      setError(errorMsg || "Não foi possível criar sua conta. Tente de novo.");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-          Criar Conta
-        </h2>
+  const fieldClass =
+    "w-full rounded-xl border border-line bg-surface py-2.5 pr-4 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30";
 
-        <p className="text-sm text-gray-500 text-center mb-6">
+  return (
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8 shadow-lift">
+        <h2 className="text-center text-2xl font-bold text-ink">Criar conta</h2>
+
+        <p className="mb-6 mt-2 text-center text-sm text-muted">
           Crie sua conta para navegar e comprar produtos na plataforma.
         </p>
 
         {error && (
-          <div className="p-3 mb-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+          <div className="mb-4 rounded-xl border border-red-200 bg-danger-soft p-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
-          {/* Nome */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              Nome Completo
-            </label>
-
+            <label className="mb-1 block text-sm font-semibold text-ink">Nome completo</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+              className={fieldClass}
               placeholder="Ex: Maria Silva"
             />
           </div>
 
-          {/* E-mail */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              E-mail
-            </label>
-
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-              placeholder="seu@email.com"
-            />
+            <label className="mb-1 block text-sm font-semibold text-ink">E-mail</label>
+            <div className="relative">
+              <MailIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`${fieldClass} pl-10`}
+                placeholder="seu@email.com"
+              />
+            </div>
           </div>
 
-          {/* Senha */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
-              Senha
-            </label>
-
+            <label className="mb-1 block text-sm font-semibold text-ink">Senha</label>
             <div className="relative">
+              <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                className={`${fieldClass} pl-10 pr-12`}
                 placeholder="••••••••"
               />
-
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-brand-600"
                 title={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
               </button>
             </div>
           </div>
 
-          {/* Botão */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-sm disabled:opacity-50"
+            className="mt-2 w-full rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white shadow-lift transition-colors hover:bg-brand-700 disabled:opacity-60"
           >
-            {loading ? "Cadastrando..." : "Criar Conta"}
+            {loading ? "Criando conta..." : "Criar conta"}
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
+        <p className="mt-6 text-center text-sm text-muted">
           Já possui conta?{" "}
-          <Link
-            to="/login"
-            className="text-blue-600 font-semibold hover:underline"
-          >
+          <Link to="/login" className="font-semibold text-brand-600 hover:underline">
             Entrar
           </Link>
         </p>

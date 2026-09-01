@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getProducts } from "../services/productService";
 import { useProductContext } from "../context/ProductContext";
 import type { Product } from "../types/product";
+import { ProductCard } from "../components/ProductCard";
+import { SearchIcon, StoreIcon, TruckIcon } from "../components/Icons";
 
 export const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,72 +19,94 @@ export const Home: React.FC = () => {
         const data = await getProducts(1, 100);
         setProducts(data.products ?? data.data ?? []);
       } catch (error) {
-        console.error(error);
+        console.error("Falha ao carregar produtos:", error);
       } finally {
         setLoading(false);
       }
     };
 
     loadProducts();
-  }, [refreshKey]); // ✅ Re-fetch quando um produto é aprovado
+  }, [refreshKey]);
 
-  // Cria as categorias automaticamente
-  const categories = [
-    "todos",
-    ...Array.from(new Set(products.map((product) => product.category))),
-  ];
+  const categories = useMemo(
+    () => [
+      "todos",
+      ...Array.from(new Set(products.map((product) => product.category))),
+    ],
+    [products]
+  );
 
-  // Lógica de filtragem por busca e categoria
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.title
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "todos" || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((product) => {
+        const matchesSearch = product.title
+          .toLowerCase()
+          .includes(search.toLowerCase());
+        const matchesCategory =
+          selectedCategory === "todos" || product.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+      }),
+    [products, search, selectedCategory]
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      {/* 1. HERO BANNER */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 px-4 sm:px-8">
-        <div className="max-w-6xl mx-auto text-center space-y-4">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+    <div className="min-h-screen">
+      {/* Hero minimalista */}
+      <section className="bg-gradient-to-br from-surface via-white to-brand-50 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center space-y-6">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 uppercase tracking-wider">
+            <TruckIcon className="h-4 w-4" />
+            Entrega rápida para todo o Brasil
+          </span>
+          <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-ink md:text-6xl">
             Encontre as melhores ofertas da cidade
           </h1>
-          <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto">
-            Descubra produtos incríveis de comerciantes locais com entrega rápida e garantia.
+          <p className="mx-auto max-w-2xl text-base text-muted md:text-lg">
+            Descubra produtos incríveis de comerciantes locais com entrega
+            rápida e garantia.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <a
+              href="#produtos"
+              className="rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-lift transition-colors hover:bg-brand-700"
+            >
+              Explorar produtos
+            </a>
+            <Link
+              to="/carrinho"
+              className="rounded-xl border border-line bg-white px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-brand-200 hover:text-brand-700"
+            >
+              Ver carrinho
+            </Link>
+          </div>
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* 2. BARRA DE PESQUISA & FILTROS */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-6">
-          {/* Campo de Busca */}
+      <main id="produtos" className="mx-auto max-w-6xl px-4 py-8 space-y-8 sm:px-6">
+        {/* Filtros */}
+        <div className="rounded-2xl border border-line bg-white p-6 shadow-lift space-y-6">
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
-              🔍
+            <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-muted">
+              <SearchIcon className="h-5 w-5" />
             </span>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="O que você está procurando hoje?"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+              className="w-full rounded-xl border border-line bg-surface py-3 pl-11 pr-4 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
             />
           </div>
 
-          {/* Filtros por Categoria (Pills) */}
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
                   selectedCategory === cat
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-brand-600 text-white shadow-lift"
+                    : "bg-surface text-muted hover:bg-brand-50 hover:text-brand-700"
                 }`}
               >
                 {cat === "todos" ? "Todos" : cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -91,52 +115,25 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. GRID DE PRODUTOS */}
+        {/* Grid de produtos */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Produtos em Destaque</h2>
+          <h2 className="mb-6 text-xl font-bold text-ink">Produtos em Destaque</h2>
 
           {loading ? (
-            <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-              <p className="text-gray-500 text-sm">Carregando produtos...</p>
+            <div className="rounded-2xl border border-line bg-white py-12 text-center">
+              <p className="text-sm text-muted">Buscando produtos...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-              <p className="text-gray-500 text-sm">Nenhum produto encontrado com os filtros selecionados.</p>
+            <div className="rounded-2xl border border-line bg-white py-12 text-center">
+              <StoreIcon className="mx-auto mb-3 h-8 w-8 text-muted" />
+              <p className="text-sm text-muted">
+                Nenhum produto encontrado com os filtros selecionados.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((product) => (
-                <div
-                  key={product._id}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-                >
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4 flex flex-col flex-grow justify-between">
-                    <div>
-                      <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                        {product.category}
-                      </span>
-                      <h3 className="font-semibold text-gray-900 mt-1 line-clamp-1">
-                        {product.title}
-                      </h3>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-lg font-bold text-gray-900">
-                        R$ {Number(product.price || 0).toFixed(2).replace(".", ",")}
-                      </span>
-                      <Link
-                        to={`/produto/${product._id}`}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
-                      >
-                        Ver Detalhes
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           )}

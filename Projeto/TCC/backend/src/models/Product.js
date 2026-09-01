@@ -21,15 +21,17 @@ const productSchema = new mongoose.Schema(
       required: [true, "O preço é obrigatório."],
       min: [0.01, "O preço deve ser maior que zero."],
     },
-    image: {
-      type: String,
-      required: [true, "A URL da imagem é obrigatória."],
-      trim: true,
+    images: {
+      type: [String],
+      required: [true, "Pelo menos uma imagem é obrigatória."],
       validate: {
         validator: function (v) {
-          return /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(v);
+          if (!v || v.length === 0) return false;
+          return v.every((url) =>
+            /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(url)
+          );
         },
-        message: "Por favor, informe uma URL de imagem válida.",
+        message: "Por favor, informe URLs de imagem válidas.",
       },
     },
     description: {
@@ -37,6 +39,11 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: [500, "A descrição não pode exceder 500 caracteres."],
       default: "",
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: [0, "O estoque não pode ser negativo."],
     },
     status: {
       type: String,

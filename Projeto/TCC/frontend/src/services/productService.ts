@@ -20,6 +20,42 @@ export const getProductById = async (id: string): Promise<Product> => {
   return response.data;
 };
 
+export const getRecommendedProducts = async (id: string): Promise<Product[]> => {
+  const response = await api.get(`/produto/${id}/recomendados`);
+  return response.data.products ?? response.data.data ?? [];
+};
+
+export interface StoreProfile {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface ProductStoreResponse {
+  store: StoreProfile | null;
+  products: Product[];
+}
+
+export const getProductStore = async (id: string): Promise<ProductStoreResponse> => {
+  const response = await api.get(`/produto/${id}/loja`);
+  return response.data;
+};
+
+export const getMyProducts = async (): Promise<Product[]> => {
+  const response = await api.get("/produto/meus-produtos");
+  return response.data.products ?? response.data.data ?? [];
+};
+
+export const updateProductStock = async (id: string, stock: number) => {
+  const response = await api.patch(`/produto/${id}/estoque`, { stock });
+  return response.data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const response = await api.delete(`/produto/${id}`);
+  return response.data;
+};
+
 export const getPendingProducts = async (page = 1, limit = 20): Promise<Paginated<Product>> => {
   // ✅ Cookie httpOnly já é enviado automaticamente com withCredentials
   const response = await api.get("/produto/pendentes", { params: { page, limit } });

@@ -56,7 +56,7 @@ test("createProductSchema valida preço positivo", () => {
       title: "Teclado",
       category: "perifericos",
       price: -5,
-      image: "https://exemplo.com/img.jpg",
+      images: ["https://exemplo.com/img.jpg"],
     }).error
   );
 
@@ -65,7 +65,7 @@ test("createProductSchema valida preço positivo", () => {
       title: "Teclado",
       category: "perifericos",
       price: 99.9,
-      image: "https://exemplo.com/img.jpg",
+      images: ["https://exemplo.com/img.jpg"],
     }).error,
     undefined
   );

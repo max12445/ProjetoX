@@ -24,12 +24,17 @@ export const createProductSchema = Joi.object({
   title: Joi.string().trim().min(3).max(120).required(),
   category: Joi.string().trim().lowercase().max(50).required(),
   price: Joi.number().positive().precision(2).required(),
-  image: Joi.string().trim().uri().required(),
+  images: Joi.array().items(Joi.string().trim().uri()).min(1).max(10).required(),
   description: Joi.string().max(500).allow("").optional(),
+  stock: Joi.number().integer().min(0).default(0).optional(),
 }).unknown(false);
 
 export const updateProductStatusSchema = Joi.object({
   status: Joi.string().valid("aprovado", "rejeitado").required(),
+}).unknown(false);
+
+export const updateProductStockSchema = Joi.object({
+  stock: Joi.number().integer().min(0).required(),
 }).unknown(false);
 
 // ✅ Middleware que valida o corpo da requisição contra um schema

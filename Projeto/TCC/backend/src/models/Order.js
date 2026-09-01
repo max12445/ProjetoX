@@ -42,6 +42,12 @@ const orderSchema = new mongoose.Schema(
       trim: true,
     },
 
+    paymentMethod: {
+      type: String,
+      enum: ["cartao", "pix", "boleto"],
+      default: "cartao",
+    },
+
     status: {
       type: String,
       enum: [

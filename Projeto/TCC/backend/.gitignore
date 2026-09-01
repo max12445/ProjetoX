@@ -8,10 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Env files (nunca versionar segredos como JWT_SECRET e MONGO_URI)
-.env
-.env.local
-.env.production
-
 node_modules/
 dist
 dist-ssr

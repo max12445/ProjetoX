@@ -1,22 +1,14 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   role?: "admin" | "comerciante" | "cliente";
 }
 
-const readUser = () => {
-  try {
-    const userStored = localStorage.getItem("user");
-    return userStored ? JSON.parse(userStored) : null;
-  } catch {
-    return null;
-  }
-};
-
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
-  const user = readUser();
+  const { user } = useAuth();
 
   // Se não estiver autenticado, redireciona para o login
   if (!user) {

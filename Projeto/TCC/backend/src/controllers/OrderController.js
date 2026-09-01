@@ -4,7 +4,7 @@ import Product from "../models/Product.js";
 // 🟢 Criar Pedido
 export const createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress } = req.body;
+    const { items, shippingAddress, paymentMethod } = req.body;
 
     if (!items || items.length === 0 || !shippingAddress) {
       return res.status(400).json({ message: "Dados do pedido incompletos." });
@@ -53,6 +53,7 @@ export const createOrder = async (req, res) => {
       items: validatedItems,
       totalPrice,
       shippingAddress,
+      paymentMethod: paymentMethod || "cartao",
     });
 
     return res.status(201).json({ message: "Pedido criado!", order: newOrder });
@@ -72,7 +73,7 @@ export const getOrders = async (req, res) => {
     const [orders, total] = await Promise.all([
       Order.find()
         .populate("user", "name email")
-        .populate("items.product", "title price image")
+        .populate("items.product", "title price image images")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -110,7 +111,7 @@ export const getOrdersByUser = async (req, res) => {
 
     const [orders, total] = await Promise.all([
       Order.find({ user: userId })
-        .populate("items.product", "title price image")
+        .populate("items.product", "title price image images")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -139,7 +140,7 @@ export const updateOrderStatus = async (req, res) => {
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { new: true, runValidators: true }
     );
     if (!updatedOrder) return res.status(404).json({ message: "Pedido não encontrado." });
 

@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { createProduct } from "../services/productService";
+import { ImageIcon, PlusIcon, XIcon } from "../components/Icons";
+
+const inputClass =
+  "w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30";
 
 export const AddProduct: React.FC = () => {
   const navigate = useNavigate();
@@ -9,7 +13,8 @@ export const AddProduct: React.FC = () => {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState<number | "">("");
-  const [image, setImage] = useState("");
+  const [stock, setStock] = useState<number | "">("");
+  const [images, setImages] = useState<string[]>([""]);
   const [description, setDescription] = useState("");
 
   const [message, setMessage] = useState<{
@@ -19,29 +24,30 @@ export const AddProduct: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
 
-  // Categorias disponíveis
   const categories = [
-    { value: "eletronicos", label: "💻 Eletrônicos" },
-    { value: "informatica", label: "🖥️ Informática" },
-    { value: "celulares", label: "📱 Celulares" },
-    { value: "acessorios", label: "🔌 Acessórios" },
-    { value: "perifericos", label: "⌨️ Periféricos" },
-    { value: "games", label: "🎮 Games" },
-    { value: "audio", label: "🎧 Áudio" },
-    { value: "outros", label: "📦 Outros" },
+    { value: "eletronicos", label: "Eletrônicos" },
+    { value: "informatica", label: "Informática" },
+    { value: "celulares", label: "Celulares" },
+    { value: "acessorios", label: "Acessórios" },
+    { value: "perifericos", label: "Periféricos" },
+    { value: "games", label: "Games" },
+    { value: "audio", label: "Áudio" },
+    { value: "outros", label: "Outros" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
-    if (!title || !category || !price || !image) {
+    if (!title || !category || !price || images.filter((i) => i.trim()).length === 0) {
       setMessage({
-        text: "Por favor, preencha todos os campos obrigatórios (*).",
+        text: "Preencha os campos obrigatórios, incluindo pelo menos uma imagem.",
         type: "error",
       });
       return;
     }
+
+    const validImages = images.map((img) => img.trim()).filter(Boolean);
 
     try {
       setLoading(true);
@@ -50,8 +56,9 @@ export const AddProduct: React.FC = () => {
         title,
         category,
         price: Number(price),
-        image,
+        images: validImages,
         description,
+        ...(typeof stock === "number" && stock >= 0 ? { stock } : {}),
       });
 
       setMessage({
@@ -78,22 +85,21 @@ export const AddProduct: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto my-10 px-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Cadastrar Novo Produto
-        </h2>
+    <div className="mx-auto my-10 max-w-2xl px-4">
+      <div className="rounded-2xl border border-line bg-white p-6 shadow-lift sm:p-8">
+        <h2 className="text-2xl font-bold text-ink">Cadastrar novo produto</h2>
 
-        <p className="text-gray-500 text-sm mb-6">
-          Insiro as informações necessárias para registrar o produto no sistema.
+        <p className="mb-6 mt-1 text-sm text-muted">
+          Insira as informações necessárias para registrar o produto no
+          sistema.
         </p>
 
         {message && (
           <div
-            className={`p-4 mb-6 rounded-xl text-sm font-medium border ${
+            className={`mb-6 rounded-xl border p-4 text-sm font-medium ${
               message.type === "success"
-                ? "bg-green-50 text-green-800 border-green-200"
-                : "bg-red-50 text-red-800 border-red-200"
+                ? "border-green-200 bg-success-soft text-green-700"
+                : "border-red-200 bg-danger-soft text-red-700"
             }`}
           >
             {message.text}
@@ -101,39 +107,33 @@ export const AddProduct: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Título */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Título do Produto *
+            <label className="mb-1 block text-sm font-semibold text-ink">
+              Título do produto *
             </label>
-
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Teclado Mecânico RGB"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+              className={inputClass}
             />
           </div>
 
-          {/* Categoria e preço */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Categoria */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-semibold text-ink">
                 Categoria *
               </label>
-
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm bg-white"
+                className={`${inputClass} bg-white`}
               >
                 <option value="" disabled>
                   Selecione uma categoria
                 </option>
-
                 {categories.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
@@ -142,12 +142,10 @@ export const AddProduct: React.FC = () => {
               </select>
             </div>
 
-            {/* Preço */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-semibold text-ink">
                 Preço (R$) *
               </label>
-
               <input
                 type="number"
                 step="0.01"
@@ -157,59 +155,108 @@ export const AddProduct: React.FC = () => {
                   setPrice(e.target.value ? Number(e.target.value) : "")
                 }
                 placeholder="Ex: 299.90"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                className={inputClass}
               />
             </div>
           </div>
 
-          {/* Imagem */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              URL da Imagem *
-            </label>
-
-            <input
-              type="url"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="https://exemplo.com/imagem.jpg"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-ink">
+                Quantidade em estoque{" "}
+                <span className="text-xs font-normal text-muted">(opcional)</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={stock}
+                onChange={(e) =>
+                  setStock(e.target.value ? Number(e.target.value) : "")
+                }
+                placeholder="Ex: 10"
+                className={inputClass}
+              />
+            </div>
           </div>
 
-          {/* Descrição */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Descrição
+            <label className="mb-1 block text-sm font-semibold text-ink">
+              URLs das imagens *{" "}
+              <span className="text-xs font-normal text-muted">
+                (a primeira é a principal)
+              </span>
             </label>
 
+            <div className="space-y-3">
+              {images.map((img, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 shrink-0 text-muted" />
+                  <input
+                    type="url"
+                    value={img}
+                    onChange={(e) => {
+                      const next = [...images];
+                      next[index] = e.target.value;
+                      setImages(next);
+                    }}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    className={inputClass}
+                  />
+                  {images.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setImages(images.filter((_, i) => i !== index))}
+                      className="rounded-lg p-2 text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                      title="Remover imagem"
+                    >
+                      <XIcon className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {images.length < 10 && (
+              <button
+                type="button"
+                onClick={() => setImages([...images, ""])}
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Adicionar outra imagem
+              </button>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-ink">
+              Descrição
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalhes sobre as especificações, garantia ou destaques do produto..."
               rows={4}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none"
+              className={`${inputClass} resize-none`}
             />
           </div>
 
-          {/* Botões */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="w-1/3 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
+              className="w-1/3 rounded-xl bg-surface py-3 text-sm font-semibold text-ink transition-colors hover:bg-line"
             >
               Cancelar
             </button>
-
             <button
               type="submit"
               disabled={loading}
-              className={`w-2/3 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm transition-colors text-sm ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
+              className={`w-2/3 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white shadow-lift transition-colors hover:bg-brand-700 ${
+                loading ? "cursor-not-allowed opacity-60" : ""
               }`}
             >
-              {loading ? "Salvando..." : "Cadastrar Produto"}
+              {loading ? "Salvando..." : "Cadastrar produto"}
             </button>
           </div>
         </form>
