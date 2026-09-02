@@ -15,6 +15,9 @@ import { ProductDetails } from "./pages/ProductDetails";
 import { Cart } from "./pages/Cart";
 import { Checkout } from "./pages/Checkout";
 import { OrderHistory } from "./pages/OrderHistory";
+import { EditProduct } from "./pages/EditProduct";
+import { AdminOrders } from "./pages/AdminOrders";
+import { MerchantOrders } from "./pages/MerchantOrders";
 
 function App() {
   return (
@@ -45,6 +48,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/editar-produto/:id"
+                      element={
+                        <ProtectedRoute role="comerciante">
+                          <EditProduct />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/login" element={<Login />} />
                     <Route path="/registro" element={<Register />} />
                     <Route
@@ -52,6 +63,22 @@ function App() {
                       element={
                         <ProtectedRoute role="admin">
                           <AdminDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin/pedidos"
+                      element={
+                        <ProtectedRoute role="admin">
+                          <AdminOrders />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/minhas-vendas"
+                      element={
+                        <ProtectedRoute role="comerciante">
+                          <MerchantOrders />
                         </ProtectedRoute>
                       }
                     />

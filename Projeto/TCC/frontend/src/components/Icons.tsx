@@ -207,3 +207,9 @@ export const ImageIcon: React.FC<IconProps> = ({ className }) => (
     <path d="m4 17 5-5 3.5 3.5L15 13l5 5" />
   </Svg>
 );
+
+export const EditIcon: React.FC<IconProps> = ({ className }) => (
+  <Svg className={className}>
+    <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+  </Svg>
+);

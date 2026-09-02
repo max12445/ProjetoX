@@ -53,3 +53,19 @@ export const getOrdersByUser = async (
   const response = await api.get(`/pedido/usuario/${userId}`, { params: { page, limit } });
   return response.data;
 };
+
+export const getMerchantOrders = async (
+  page = 1,
+  limit = 20
+): Promise<PaginatedOrders<Order>> => {
+  const response = await api.get("/pedido/comerciante", { params: { page, limit } });
+  return response.data;
+};
+
+export const updateOrderStatus = async (
+  id: string,
+  status: "pendente" | "processando" | "enviado" | "entregue" | "cancelado"
+): Promise<{ message: string; order: Order }> => {
+  const response = await api.put(`/pedido/${id}`, { status });
+  return response.data;
+};

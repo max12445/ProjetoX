@@ -271,6 +271,56 @@ export const createProduct = async (req, res) => {
   }
 };
 
+// PATCH /produto/:id - Editar produto (dono da loja ou admin)
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Produto não encontrado." });
+    }
+
+    const isOwner =
+      product.comercianteId && product.comercianteId.toString() === req.user.id;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        message: "Você não possui permissão para editar este produto.",
+      });
+    }
+
+    const { title, category, price, images, description, stock } = req.body;
+    const updateData = {};
+
+    if (title !== undefined) updateData.title = title;
+    if (category !== undefined) updateData.category = category;
+    if (price !== undefined) updateData.price = price;
+    if (images !== undefined) updateData.images = images;
+    if (description !== undefined) updateData.description = description;
+    if (stock !== undefined) updateData.stock = stock;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json({
+      message: "Produto atualizado com sucesso!",
+      product: updatedProduct,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ message: messages.join(" ") });
+    }
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao atualizar produto." });
+  }
+};
+
 // PATCH /produto/:id/status - Aprovar ou Rejeitar produto (Painel Admin)
 export const updateProductStatus = async (req, res) => {
   try {

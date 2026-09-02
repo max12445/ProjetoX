@@ -51,12 +51,30 @@ export const Navbar: React.FC = () => {
             </Link>
           )}
 
+          {(user?.role === "comerciante" || user?.role === "admin") && (
+            <Link
+              to="/minhas-vendas"
+              className="hidden rounded-lg px-3 py-2 text-ink transition-colors hover:bg-brand-50 hover:text-brand-700 sm:block"
+            >
+              Minhas Vendas
+            </Link>
+          )}
+
           {user?.role === "admin" && (
             <Link
               to="/admin/pendentes"
               className="rounded-lg bg-amber-50 px-3 py-2 text-amber-700 transition-colors hover:bg-amber-100"
             >
               Painel Admin
+            </Link>
+          )}
+
+          {user?.role === "admin" && (
+            <Link
+              to="/admin/pedidos"
+              className="rounded-lg bg-amber-50 px-3 py-2 text-amber-700 transition-colors hover:bg-amber-100"
+            >
+              Pedidos
             </Link>
           )}
 

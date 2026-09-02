@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
@@ -37,6 +38,14 @@ export const createOrder = async (req, res) => {
         return res.status(400).json({ message: "Quantidade de produto inválida." });
       }
 
+      // Produtos legados podem não ter controle de estoque.
+      // Quando o estoque está definido, ele deve ser suficiente.
+      if (typeof product.stock === "number" && product.stock < quantity) {
+        return res.status(400).json({
+          message: `Estoque insuficiente para "${product.title}". Disponível: ${product.stock}.`,
+        });
+      }
+
       const unitPrice = product.price;
       totalPrice += unitPrice * quantity;
 
@@ -55,6 +64,16 @@ export const createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod: paymentMethod || "cartao",
     });
+
+    // Baixa o estoque de cada produto de forma atômica (evita race conditions)
+    await Promise.all(
+      validatedItems.map(({ product, quantity }) =>
+        Product.findOneAndUpdate(
+          { _id: product, stock: { $gte: quantity } },
+          { $inc: { stock: -quantity } }
+        )
+      )
+    );
 
     return res.status(201).json({ message: "Pedido criado!", order: newOrder });
   } catch (error) {
@@ -130,6 +149,52 @@ export const getOrdersByUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Erro ao buscar histórico." });
+  }
+};
+
+// 🟠 Listar Pedidos do Comerciante (pedidos que contêm seus produtos)
+export const getMerchantOrders = async (req, res) => {
+  try {
+    const merchantId = req.user.id;
+
+    // Busca todos os IDs de produtos do comerciante
+    const merchantProductIds = await Product.find({ comercianteId: merchantId }).distinct("_id");
+
+    if (merchantProductIds.length === 0) {
+      return res.status(200).json({
+        orders: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      });
+    }
+
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+    const skip = (page - 1) * limit;
+
+    const filter = { "items.product": { $in: merchantProductIds } };
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .populate("user", "name email")
+        .populate("items.product", "title price images comercianteId")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Order.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar pedidos da loja." });
   }
 };
 

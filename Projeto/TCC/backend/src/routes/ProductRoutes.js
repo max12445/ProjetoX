@@ -7,6 +7,7 @@ import {
   getRecommendedProducts,
   getProductStore,
   createProduct,
+  updateProduct,
   updateProductStatus,
   updateProductStock,
   deleteProduct,
@@ -16,6 +17,7 @@ import { requireRole } from "../middleware/roleMiddleware.js";
 import {
   validate,
   createProductSchema,
+  updateProductSchema,
   updateProductStatusSchema,
   updateProductStockSchema,
 } from "../middleware/validationMiddleware.js";
@@ -31,6 +33,7 @@ router.get("/:id/loja", getProductStore);
 router.get("/:id", getProductById);
 router.patch("/:id/status", authMiddleware, requireRole("admin"), validate(updateProductStatusSchema), updateProductStatus);
 router.patch("/:id/estoque", authMiddleware, requireRole("comerciante", "admin"), validate(updateProductStockSchema), updateProductStock);
+router.patch("/:id", authMiddleware, requireRole("admin", "comerciante"), validate(updateProductSchema), updateProduct);
 router.delete("/:id", authMiddleware, deleteProduct);
 
 export default router;

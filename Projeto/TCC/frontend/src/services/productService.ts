@@ -56,6 +56,14 @@ export const deleteProduct = async (id: string) => {
   return response.data;
 };
 
+export const updateProduct = async (
+  id: string,
+  productData: Partial<Pick<Product, "title" | "category" | "price" | "images" | "description" | "stock">>
+) => {
+  const response = await api.patch(`/produto/${id}`, productData);
+  return response.data;
+};
+
 export const getPendingProducts = async (page = 1, limit = 20): Promise<Paginated<Product>> => {
   // ✅ Cookie httpOnly já é enviado automaticamente com withCredentials
   const response = await api.get("/produto/pendentes", { params: { page, limit } });

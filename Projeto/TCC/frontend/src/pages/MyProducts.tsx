@@ -7,7 +7,7 @@ import { useProductContext } from "../context/ProductContext";
 import { BadgeStatus } from "../components/BadgeStatus";
 import { EmptyState } from "../components/EmptyState";
 import { PriceTag } from "../components/PriceTag";
-import { CheckIcon, PlusIcon, StoreIcon, TrashIcon } from "../components/Icons";
+import { CheckIcon, EditIcon, PlusIcon, StoreIcon, TrashIcon } from "../components/Icons";
 
 export const MyProducts: React.FC = () => {
   const { triggerRefresh } = useProductContext();
@@ -257,6 +257,14 @@ export const MyProducts: React.FC = () => {
                     aria-label={`Estoque de ${product.title}`}
                   />
                 </div>
+                <Link
+                  to={`/editar-produto/${product._id}`}
+                  className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand-200 hover:text-brand-700"
+                  aria-label={`Editar ${product.title}`}
+                >
+                  <EditIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline">Editar</span>
+                </Link>
                 <button
                   onClick={() => handleSaveStock(product)}
                   disabled={isSaving || isDeleting || editValue === (product.stock ?? 0)}
