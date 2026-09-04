@@ -1,12 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { loginUser, registerUser, logoutUser, type RegisterData } from "../services/userService";
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+  updateCurrentUser,
+  type RegisterData,
+} from "../services/userService";
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: "admin" | "comerciante" | "cliente";
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -14,6 +21,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (id: string, data: Partial<Pick<User, "name" | "email" | "avatar">>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,8 +74,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     window.dispatchEvent(new Event("auth-change"));
   }, []);
 
+  const updateProfile = useCallback(
+    async (id: string, data: Partial<Pick<User, "name" | "email" | "avatar">>) => {
+      const result = await updateCurrentUser(id, data);
+      const userData: User = result.user;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      setUser(userData);
+      window.dispatchEvent(new Event("auth-change"));
+    },
+    []
+  );
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

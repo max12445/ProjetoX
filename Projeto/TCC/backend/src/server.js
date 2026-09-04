@@ -9,6 +9,7 @@ import { connectDatabase } from "./config/db.js";
 import ProdutosRoutes from "./routes/ProductRoutes.js";
 import UserRoutes from "./routes/UserRoutes.js";
 import OrderRoutes from "./routes/OrderRoutes.js";
+import SupportRoutes from "./routes/SupportRoutes.js";
 
 // ✅ Valida variáveis de ambiente críticas antes de iniciar
 const requiredEnv = ["MONGO_URI", "JWT_SECRET"];
@@ -70,9 +71,10 @@ app.use("/usuario/register", authLimiter);
 app.use("/produto", ProdutosRoutes);
 app.use("/usuario", UserRoutes);
 app.use("/pedido", OrderRoutes);
+app.use("/suporte", SupportRoutes);
 
 app.get("/", (req, res) => {
-  res.json({ message: "API da TechStore está no ar!" });
+  res.json({ message: "API da Maxibuy está no ar!" });
 });
 
 // ✅ Tratamento de rota não encontrada (404)

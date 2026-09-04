@@ -10,9 +10,47 @@ export interface Paginated<T> {
   pagination?: { page: number; limit: number; total: number; totalPages: number };
 }
 
-export const getProducts = async (page = 1, limit = 12): Promise<Paginated<Product>> => {
-  const response = await api.get("/produto", { params: { page, limit } });
+export interface ProductFilters {
+  q?: string;
+  category?: string;
+  store?: string;
+  minPrice?: number | string;
+  maxPrice?: number | string;
+  sort?: "recent" | "priceAsc" | "priceDesc";
+}
+
+export interface Store {
+  id: string;
+  name: string;
+  productCount: number;
+}
+
+export const getProducts = async (
+  page = 1,
+  limit = 12,
+  filters: ProductFilters = {}
+): Promise<Paginated<Product>> => {
+  const params: Record<string, string | number> = { page, limit };
+
+  if (filters.q && filters.q.trim()) params.q = filters.q.trim();
+  if (filters.category) params.category = filters.category;
+  if (filters.store) params.store = filters.store;
+  if (filters.minPrice !== undefined && filters.minPrice !== "") params.minPrice = filters.minPrice;
+  if (filters.maxPrice !== undefined && filters.maxPrice !== "") params.maxPrice = filters.maxPrice;
+  if (filters.sort && filters.sort !== "recent") params.sort = filters.sort;
+
+  const response = await api.get("/produto", { params });
   return response.data;
+};
+
+export const getCategories = async (): Promise<string[]> => {
+  const response = await api.get("/produto/categorias");
+  return response.data.categories ?? [];
+};
+
+export const getStores = async (): Promise<Store[]> => {
+  const response = await api.get("/produto/lojas");
+  return response.data.stores ?? [];
 };
 
 export const getProductById = async (id: string): Promise<Product> => {

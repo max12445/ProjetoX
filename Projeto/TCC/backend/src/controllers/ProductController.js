@@ -11,18 +11,46 @@ const approvedFilter = (excludeId) => ({
 });
 
 // GET /produto - Busca produtos APROVADOS (e antigos sem status) para exibir na Home
+// Suporta filtros: q (busca no título), category, minPrice, maxPrice e sort
 export const getProducts = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 12, 1), 100);
     const skip = (page - 1) * limit;
 
+    const { q, category, minPrice, maxPrice, sort, store } = req.query;
+
+    const filter = approvedFilter();
+
+    if (q && String(q).trim()) {
+      filter.title = { $regex: String(q).trim(), $options: "i" };
+    }
+    if (category && String(category).trim()) {
+      filter.category = String(category).trim();
+    }
+    if (store && String(store).trim()) {
+      filter.comercianteId = String(store).trim();
+    }
+    if (minPrice !== undefined && minPrice !== "") {
+      filter.price = { ...(filter.price || {}), $gte: Math.max(Number(minPrice) || 0, 0) };
+    }
+    if (maxPrice !== undefined && maxPrice !== "") {
+      filter.price = { ...(filter.price || {}), $lte: Math.max(Number(maxPrice) || 0, 0) };
+    }
+
+    const sortOptions =
+      sort === "priceAsc"
+        ? { price: 1 }
+        : sort === "priceDesc"
+          ? { price: -1 }
+          : { createdAt: -1 };
+
     const [products, total] = await Promise.all([
-      Product.find(approvedFilter())
-        .sort({ createdAt: -1 })
+      Product.find(filter)
+        .sort(sortOptions)
         .skip(skip)
         .limit(limit),
-      Product.countDocuments(approvedFilter()),
+      Product.countDocuments(filter),
     ]);
 
     res.status(200).json({
@@ -37,6 +65,51 @@ export const getProducts = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erro ao buscar produtos." });
+  }
+};
+
+// GET /produto/categorias - Lista de categorias disponíveis (para filtros da Home)
+export const getCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct("category", approvedFilter());
+    res.status(200).json({ categories: categories.filter(Boolean).sort() });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar categorias." });
+  }
+};
+
+// GET /produto/lojas - Lista de lojas com produtos aprovados (para filtro da Home)
+export const getStores = async (req, res) => {
+  try {
+    const stores = await Product.aggregate([
+      { $match: approvedFilter() },
+      { $match: { comercianteId: { $ne: null, $exists: true } } },
+      { $group: { _id: "$comercianteId", productCount: { $sum: 1 } } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "store",
+        },
+      },
+      {
+        $project: {
+          id: "$_id",
+          name: { $arrayElemAt: ["$store.name", 0] },
+          productCount: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    res
+      .status(200)
+      .json({ stores: stores.filter((s) => s.name).sort((a, b) => a.name.localeCompare(b.name)) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar lojas." });
   }
 };
 

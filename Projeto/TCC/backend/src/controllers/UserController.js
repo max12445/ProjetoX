@@ -111,6 +111,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar || "",
       },
     });
 
@@ -119,6 +120,22 @@ export const loginUser = async (req, res) => {
     return res.status(500).json({
       message: "Erro ao realizar login."
     });
+  }
+};
+
+// 👤 Dados do Usuário Atual (do token JWT)
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado." });
+    }
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar dados do usuário." });
   }
 };
 
@@ -153,10 +170,10 @@ export const getUsers = async (req, res) => {
   }
 };
 
-// 🟡 Atualizar Usuário
+// 🟡 Atualizar Usuário (perfil e senha)
 export const updateUser = async (req, res) => {
   try {
-    const { name, email, role, password } = req.body;
+    const { name, email, role, password, avatar, currentPassword } = req.body;
 
     const currentUserId = req.user.id;
     const targetUserId = req.params.id;
@@ -168,7 +185,7 @@ export const updateUser = async (req, res) => {
     }
 
     // ✅ Validar que pelo menos um campo foi enviado
-    if (!name && !email && !role && !password) {
+    if (!name && !email && !role && !password && avatar === undefined) {
       return res.status(400).json({
         message: "Nenhum dado para atualizar.",
       });
@@ -177,15 +194,17 @@ export const updateUser = async (req, res) => {
     const updateData = {};
 
     // ✅ Apenas incluir campos que foram fornecidos
-    if (name) updateData.name = name;
+    if (name !== undefined) updateData.name = name;
 
-    if (email) {
+    if (email !== undefined) {
       const emailNormalized = email.trim().toLowerCase();
       if (!emailRegex.test(emailNormalized)) {
         return res.status(400).json({ message: "E-mail inválido." });
       }
       updateData.email = emailNormalized;
     }
+
+    if (avatar !== undefined) updateData.avatar = avatar;
 
     // Apenas admin pode alterar o papel (role) de um usuário
     if (role) {
@@ -194,20 +213,39 @@ export const updateUser = async (req, res) => {
       }
       updateData.role = role;
     }
-    
-    // Só altera a senha se uma nova senha for enviada
+
+    // Só altera a senha se uma nova senha for enviada (confere a atual)
     if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Informe a senha atual para alterar a senha." });
+      }
+
+      const user = await User.findById(targetUserId).select("+password");
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        return res.status(400).json({ message: "Senha atual incorreta." });
+      }
+
       updateData.password = await bcrypt.hash(password, 10);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
+    let updatedUser;
+    try {
+      updatedUser = await User.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true, runValidators: true }
+      ).select("-password");
+    } catch (error) {
+      if (error && error.code === 11000) {
+        return res.status(400).json({ message: "E-mail já cadastrado." });
       }
-    ).select("-password");
+      throw error;
+    }
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -220,6 +258,10 @@ export const updateUser = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ message: messages.join(" ") });
+    }
     console.error(error);
 
     return res.status(500).json({

@@ -1,15 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getProducts } from "../services/productService";
+import { getProducts, getCategories, getStores } from "../services/productService";
 import { useProductContext } from "../context/ProductContext";
 import type { Product } from "../types/product";
+import type { ProductFilters, Store } from "../services/productService";
 import { ProductCard } from "../components/ProductCard";
 import { SearchIcon, StoreIcon, TruckIcon } from "../components/Icons";
 
+type SortOption = "recent" | "priceAsc" | "priceDesc";
+
 export const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("todos");
+  const [selectedStore, setSelectedStore] = useState("todas");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState<SortOption>("recent");
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -17,34 +28,88 @@ export const Home: React.FC = () => {
   const { refreshKey } = useProductContext();
   const PAGE_SIZE = 12;
 
+  // Debounce da busca: aplica a palavra após 300ms sem digitação
   useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Categorias disponíveis para filtro (vindas do servidor)
+  useEffect(() => {
+    let active = true;
+    getCategories()
+      .then((result) => {
+        if (active) setCategories(result);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Lojas com produtos aprovados (para o filtro de loja)
+  useEffect(() => {
+    let active = true;
+    getStores()
+      .then((result) => {
+        if (active) setStores(result);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filters = useMemo<ProductFilters>(
+    () => ({
+      q: search || undefined,
+      category: selectedCategory === "todos" ? undefined : selectedCategory,
+      store: selectedStore === "todas" ? undefined : selectedStore,
+      minPrice: minPrice || undefined,
+      maxPrice: maxPrice || undefined,
+      sort,
+    }),
+    [search, selectedCategory, selectedStore, minPrice, maxPrice, sort]
+  );
+
+  useEffect(() => {
+    let active = true;
+
     const loadProducts = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const data = await getProducts(1, PAGE_SIZE);
+        const data = await getProducts(1, PAGE_SIZE, filters);
+        if (!active) return;
         setProducts(data.products ?? data.data ?? []);
         setPage(1);
+        setTotal(data.pagination?.total ?? 0);
         setHasMore((data.pagination?.totalPages ?? 1) > 1);
       } catch (error) {
         console.error("Falha ao carregar produtos:", error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     loadProducts();
-  }, [refreshKey]);
+
+    return () => {
+      active = false;
+    };
+  }, [filters, refreshKey]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     const nextPage = page + 1;
     try {
       setLoadingMore(true);
-      const data = await getProducts(nextPage, PAGE_SIZE);
+      const data = await getProducts(nextPage, PAGE_SIZE, filters);
       const newProducts = data.products ?? data.data ?? [];
       setProducts((prev) => [...prev, ...newProducts]);
       setPage(nextPage);
-      setHasMore((data.pagination?.totalPages ?? 1) > nextPage);
+      setHasMore((data.pagination?.total ?? total) > nextPage * PAGE_SIZE);
     } catch (error) {
       console.error("Falha ao carregar mais produtos:", error);
     } finally {
@@ -52,26 +117,16 @@ export const Home: React.FC = () => {
     }
   };
 
-  const categories = useMemo(
-    () => [
-      "todos",
-      ...Array.from(new Set(products.map((product) => product.category))),
-    ],
-    [products]
-  );
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
 
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        const matchesSearch = product.title
-          .toLowerCase()
-          .includes(search.toLowerCase());
-        const matchesCategory =
-          selectedCategory === "todos" || product.category === selectedCategory;
-        return matchesSearch && matchesCategory;
-      }),
-    [products, search, selectedCategory]
-  );
+  const hasFilters =
+    search !== "" ||
+    selectedCategory !== "todos" ||
+    selectedStore !== "todas" ||
+    minPrice !== "" ||
+    maxPrice !== "";
 
   return (
     <div className="min-h-screen">
@@ -115,31 +170,103 @@ export const Home: React.FC = () => {
             </span>
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="O que você está procurando hoje?"
               className="w-full rounded-xl border border-line bg-surface py-3 pl-11 pr-4 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-1 flex-wrap gap-2">
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => handleCategoryChange("todos")}
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedCategory === cat
+                  selectedCategory === "todos"
                     ? "bg-brand-600 text-white shadow-lift"
                     : "bg-surface text-muted hover:bg-brand-50 hover:text-brand-700"
                 }`}
               >
-                {cat === "todos" ? "Todos" : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                Todos
               </button>
-            ))}
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryChange(cat)}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? "bg-brand-600 text-white shadow-lift"
+                      : "bg-surface text-muted hover:bg-brand-50 hover:text-brand-700"
+                  }`}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1.5 text-sm">
+                <span className="text-xs font-medium text-muted">Loja</span>
+                <select
+                  value={selectedStore}
+                  onChange={(e) => setSelectedStore(e.target.value)}
+                  aria-label="Filtrar por loja"
+                  className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+                >
+                  <option value="todas">Todas</option>
+                  {stores.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.productCount})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex items-center gap-1.5 text-sm">
+                <span className="text-xs font-medium text-muted">Preço</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="Min"
+                  aria-label="Preço mínimo"
+                  className="w-20 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+                />
+                <span className="text-muted">–</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Max"
+                  aria-label="Preço máximo"
+                  className="w-20 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none transition-all placeholder:text-muted/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+                />
+              </label>
+
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortOption)}
+                aria-label="Ordenar produtos"
+                className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+              >
+                <option value="recent">Mais recentes</option>
+                <option value="priceAsc">Menor preço</option>
+                <option value="priceDesc">Maior preço</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Grid de produtos */}
+        {hasFilters && !loading && (
+          <p className="text-sm text-muted">
+            {total} {total === 1 ? "produto encontrado" : "produtos encontrados"} para
+            a busca selecionada.
+          </p>
+        )}
+
         <div>
           <h2 className="mb-6 text-xl font-bold text-ink">Produtos em Destaque</h2>
 
@@ -147,7 +274,7 @@ export const Home: React.FC = () => {
             <div className="rounded-2xl border border-line bg-white py-12 text-center">
               <p className="text-sm text-muted">Buscando produtos...</p>
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="rounded-2xl border border-line bg-white py-12 text-center">
               <StoreIcon className="mx-auto mb-3 h-8 w-8 text-muted" />
               <p className="text-sm text-muted">
@@ -157,7 +284,7 @@ export const Home: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
@@ -180,3 +307,5 @@ export const Home: React.FC = () => {
     </div>
   );
 };
+
+export default Home;

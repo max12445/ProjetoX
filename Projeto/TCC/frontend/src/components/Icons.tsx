@@ -148,6 +148,20 @@ export const StoreIcon: React.FC<IconProps> = ({ className }) => (
   </Svg>
 );
 
+export const MenuIcon: React.FC<IconProps> = ({ className }) => (
+  <Svg className={className}>
+    <path d="M4 6.5h16M4 12h16M4 17.5h16" />
+  </Svg>
+);
+
+export const UsersIcon: React.FC<IconProps> = ({ className }) => (
+  <Svg className={className}>
+    <path d="M15 21v-1.5a4.5 4.5 0 0 0-4.5-4.5H6A4.5 4.5 0 0 0 1.5 19.5V21" />
+    <circle cx="10.5" cy="7.5" r="4" />
+    <path d="M16 3.2a4 4 0 0 1 0 8.6M20.5 21v-1.5a4.5 4.5 0 0 0-3-4.2" />
+  </Svg>
+);
+
 export const TruckIcon: React.FC<IconProps> = ({ className }) => (
   <Svg className={className}>
     <path d="M1.5 4h13v12h-13V4Z" />

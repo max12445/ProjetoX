@@ -1,6 +1,8 @@
 import express from "express";
 import {
   getProducts,
+  getCategories,
+  getStores,
   getPendingProducts,
   getMyProducts,
   getProductById,
@@ -25,6 +27,8 @@ import {
 const router = express.Router();
 
 router.get("/", getProducts);
+router.get("/categorias", getCategories);
+router.get("/lojas", getStores);
 router.get("/pendentes", authMiddleware, requireRole("admin"), getPendingProducts);
 router.get("/meus-produtos", authMiddleware, requireRole("comerciante", "admin"), getMyProducts);
 router.post("/", authMiddleware, requireRole("admin", "comerciante"), validate(createProductSchema), createProduct);

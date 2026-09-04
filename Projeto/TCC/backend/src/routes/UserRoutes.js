@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   getUsers,
+  getCurrentUser,
   updateUser,
   deleteUser,
   logoutUser,
@@ -16,6 +17,7 @@ const router = express.Router();
 router.post("/register", validate(registerSchema), registerUser);
 router.post("/login", validate(loginSchema), loginUser);
 router.post("/logout", logoutUser);
+router.get("/me", authMiddleware, getCurrentUser);
 router.get("/", authMiddleware, requireRole("admin"), getUsers);
 router.put("/:id", authMiddleware, validate(updateUserSchema), updateUser);
 router.delete("/:id", authMiddleware, requireRole("admin"), deleteUser);

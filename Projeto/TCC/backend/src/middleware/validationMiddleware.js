@@ -18,6 +18,8 @@ export const updateUserSchema = Joi.object({
   email: Joi.string().trim().lowercase().email().optional(),
   role: Joi.string().valid("cliente", "comerciante", "admin").optional(),
   password: Joi.string().min(6).max(72).optional(),
+  avatar: Joi.string().trim().allow("").max(500).optional(),
+  currentPassword: Joi.string().min(6).max(72).optional(),
 }).min(1).unknown(false);
 
 export const createProductSchema = Joi.object({
@@ -64,6 +66,17 @@ export const updateOrderStatusSchema = Joi.object({
   status: Joi.string()
     .valid("pendente", "processando", "enviado", "entregue", "cancelado")
     .required(),
+}).unknown(false);
+
+export const createSupportMessageSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required(),
+  email: Joi.string().trim().lowercase().email().required(),
+  subject: Joi.string().trim().min(3).max(120).required(),
+  message: Joi.string().trim().min(10).max(1000).required(),
+}).unknown(false);
+
+export const updateSupportStatusSchema = Joi.object({
+  status: Joi.string().valid("aberto", "respondido", "resolvido").required(),
 }).unknown(false);
 
 // ✅ Middleware que valida o corpo da requisição contra um schema

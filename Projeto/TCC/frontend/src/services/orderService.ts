@@ -36,6 +36,22 @@ export interface Order {
   updatedAt?: string;
 }
 
+export interface MerchantDashboard {
+  totalVendas: number;
+  receitaTotal: number;
+  ticketMedio: number;
+  itensVendidos: number;
+  pedidosPorStatus: Array<{ status: string; count: number }>;
+  vendasPorDia: Array<{ date: string; count: number; revenue: number }>;
+  topProdutos: Array<{ productId: string; title: string; qty: number }>;
+}
+
+export interface AdminDashboard extends MerchantDashboard {
+  totalUsuarios: number;
+  totalProdutos: number;
+  totalLojas: number;
+}
+
 export interface PaginatedOrders<T> {
   orders?: T[];
   data?: T[];
@@ -66,6 +82,16 @@ export const getMerchantOrders = async (
   limit = 20
 ): Promise<PaginatedOrders<Order>> => {
   const response = await api.get("/pedido/comerciante", { params: { page, limit } });
+  return response.data;
+};
+
+export const getMerchantDashboard = async (): Promise<MerchantDashboard> => {
+  const response = await api.get("/pedido/comerciante/dashboard");
+  return response.data;
+};
+
+export const getAdminDashboard = async (): Promise<AdminDashboard> => {
+  const response = await api.get("/pedido/admin/dashboard");
   return response.data;
 };
 

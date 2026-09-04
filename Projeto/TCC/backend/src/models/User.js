@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    avatar: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     password: {
       type: String,
       required: [true, "A senha é obrigatória."],

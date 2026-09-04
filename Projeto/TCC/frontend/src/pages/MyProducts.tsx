@@ -129,7 +129,7 @@ export const MyProducts: React.FC = () => {
         <EmptyState
           icon={<StoreIcon />}
           title="Você ainda não cadastrou produtos"
-          description="Cadastre seu primeiro produto para começar a vender na TechStore."
+          description="Cadastre seu primeiro produto para começar a vender na Maxibuy."
         >
           <Link
             to="/cadastrar-produto"
