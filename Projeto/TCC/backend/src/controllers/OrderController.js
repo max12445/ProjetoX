@@ -4,6 +4,8 @@ import Product from "../models/Product.js";
 
 // 🟢 Criar Pedido
 export const createOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
     const { items, shippingAddress, paymentMethod } = req.body;
 
@@ -38,11 +40,12 @@ export const createOrder = async (req, res) => {
         return res.status(400).json({ message: "Quantidade de produto inválida." });
       }
 
-      // Produtos legados podem não ter controle de estoque.
-      // Quando o estoque está definido, ele deve ser suficiente.
-      if (typeof product.stock === "number" && product.stock < quantity) {
+      // Produtos sem estoque definido são tratados como esgotados
+      // (consistente com o default 0 do schema), evitando vendas sem controle.
+      const availableStock = product.stock ?? 0;
+      if (availableStock < quantity) {
         return res.status(400).json({
-          message: `Estoque insuficiente para "${product.title}". Disponível: ${product.stock}.`,
+          message: `Estoque insuficiente para "${product.title}". Disponível: ${availableStock}.`,
         });
       }
 
@@ -56,29 +59,49 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // O usuário do pedido vem do token JWT, nunca do corpo da requisição
-    const newOrder = await Order.create({
-      user: req.user.id,
-      items: validatedItems,
-      totalPrice,
-      shippingAddress,
-      paymentMethod: paymentMethod || "cartao",
-    });
+    // Transação: baixa o estoque E cria o pedido de forma atômica (evita race conditions)
+    session.startTransaction();
 
-    // Baixa o estoque de cada produto de forma atômica (evita race conditions)
-    await Promise.all(
-      validatedItems.map(({ product, quantity }) =>
-        Product.findOneAndUpdate(
-          { _id: product, stock: { $gte: quantity } },
-          { $inc: { stock: -quantity } }
-        )
-      )
+    for (const { product, quantity } of validatedItems) {
+      const updated = await Product.findOneAndUpdate(
+        { _id: product, stock: { $gte: quantity } },
+        { $inc: { stock: -quantity } },
+        { session }
+      );
+
+      if (!updated) {
+        await session.abortTransaction();
+        return res.status(400).json({
+          message: "Estoque insuficiente. Verifique a disponibilidade dos produtos.",
+        });
+      }
+    }
+
+    // O usuário do pedido vem do token JWT, nunca do corpo da requisição
+    const [newOrder] = await Order.create(
+      [
+        {
+          user: req.user.id,
+          items: validatedItems,
+          totalPrice,
+          shippingAddress,
+          paymentMethod: paymentMethod || "cartao",
+        },
+      ],
+      { session }
     );
+
+    await session.commitTransaction();
 
     return res.status(201).json({ message: "Pedido criado!", order: newOrder });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error(error);
     return res.status(500).json({ message: "Erro ao criar pedido." });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -92,7 +115,7 @@ export const getOrders = async (req, res) => {
     const [orders, total] = await Promise.all([
       Order.find()
         .populate("user", "name email")
-        .populate("items.product", "title price image images")
+        .populate("items.product", "title price images")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -130,7 +153,7 @@ export const getOrdersByUser = async (req, res) => {
 
     const [orders, total] = await Promise.all([
       Order.find({ user: userId })
-        .populate("items.product", "title price image images")
+        .populate("items.product", "title price images")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),

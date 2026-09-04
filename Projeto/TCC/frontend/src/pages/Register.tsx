@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -11,20 +11,40 @@ export const Register: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const navigateTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current !== null) {
+        window.clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     setLoading(true);
 
     try {
       await register({ name, email, password });
 
-      alert("Usuário cadastrado com sucesso! Faça login para continuar.");
-      navigate("/login");
+      setMessage({
+        text: "Usuário cadastrado com sucesso! Faça login para continuar.",
+        type: "success",
+      });
+
+      navigateTimeoutRef.current = window.setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (error) {
       const errorMsg =
         error instanceof AxiosError
@@ -51,6 +71,19 @@ export const Register: React.FC = () => {
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-danger-soft p-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div
+            className={`mb-4 rounded-xl border p-3 text-sm font-medium ${
+              message.type === "success"
+                ? "border-green-200 bg-success-soft text-green-700"
+                : "border-red-200 bg-danger-soft text-red-700"
+            }`}
+            role="status"
+          >
+            {message.text}
           </div>
         )}
 

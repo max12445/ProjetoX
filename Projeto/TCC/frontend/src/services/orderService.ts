@@ -17,7 +17,14 @@ export interface Order {
   items: Array<{
     product:
       | string
-      | { _id: string; title?: string; price?: number; image?: string; images?: string[] };
+      | {
+          _id: string;
+          title?: string;
+          price?: number;
+          image?: string;
+          images?: string[];
+          comercianteId?: string;
+        };
     quantity: number;
     price: number;
   }>;

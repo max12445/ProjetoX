@@ -43,6 +43,8 @@ export const Cart: React.FC = () => {
           {items.map((item) => {
             const images = getProductImages(item.product);
             const imageUrl = images[0] ?? "";
+            const maxQuantity =
+              typeof item.product.stock === "number" ? item.product.stock : Infinity;
             return (
               <div
                 key={item.product._id}
@@ -88,8 +90,14 @@ export const Cart: React.FC = () => {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                        className="rounded-r-xl px-3 py-1.5 text-muted transition-colors hover:bg-surface hover:text-ink"
+                        onClick={() =>
+                          updateQuantity(
+                            item.product._id,
+                            Math.min(maxQuantity, item.quantity + 1)
+                          )
+                        }
+                        disabled={item.quantity >= maxQuantity}
+                        className="rounded-r-xl px-3 py-1.5 text-muted transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                         aria-label="Aumentar quantidade"
                       >
                         <PlusIcon className="h-4 w-4" />

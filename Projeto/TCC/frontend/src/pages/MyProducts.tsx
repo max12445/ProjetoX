@@ -267,7 +267,7 @@ export const MyProducts: React.FC = () => {
                 </Link>
                 <button
                   onClick={() => handleSaveStock(product)}
-                  disabled={isSaving || isDeleting || editValue === (product.stock ?? 0)}
+                  disabled={isSaving || isDeleting || Number(editValue) === (product.stock ?? 0)}
                   className="flex items-center gap-1.5 rounded-xl bg-ink px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <CheckIcon className="h-4 w-4" />

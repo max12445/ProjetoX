@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -36,6 +36,16 @@ export const Checkout: React.FC = () => {
   const [cardCvv, setCardCvv] = useState("");
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const navigateTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current !== null) {
+        window.clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -77,9 +87,6 @@ export const Checkout: React.FC = () => {
     try {
       setLoading(true);
 
-      // Simulação de delay de processamento do pagamento
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       await createOrder({
         items: items.map((item) => ({
           product: item.product._id,
@@ -92,7 +99,7 @@ export const Checkout: React.FC = () => {
       clearCart();
       setMessage({ text: "Pedido confirmado! Vamos prepará-lo.", type: "success" });
 
-      setTimeout(() => {
+      navigateTimeoutRef.current = window.setTimeout(() => {
         navigate(`/meus-pedidos`);
       }, 1500);
     } catch (error) {

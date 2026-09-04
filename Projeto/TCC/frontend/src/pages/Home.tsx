@@ -11,13 +11,20 @@ export const Home: React.FC = () => {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const { refreshKey } = useProductContext();
+  const PAGE_SIZE = 12;
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await getProducts(1, 100);
+        setLoading(true);
+        const data = await getProducts(1, PAGE_SIZE);
         setProducts(data.products ?? data.data ?? []);
+        setPage(1);
+        setHasMore((data.pagination?.totalPages ?? 1) > 1);
       } catch (error) {
         console.error("Falha ao carregar produtos:", error);
       } finally {
@@ -27,6 +34,23 @@ export const Home: React.FC = () => {
 
     loadProducts();
   }, [refreshKey]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    try {
+      setLoadingMore(true);
+      const data = await getProducts(nextPage, PAGE_SIZE);
+      const newProducts = data.products ?? data.data ?? [];
+      setProducts((prev) => [...prev, ...newProducts]);
+      setPage(nextPage);
+      setHasMore((data.pagination?.totalPages ?? 1) > nextPage);
+    } catch (error) {
+      console.error("Falha ao carregar mais produtos:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const categories = useMemo(
     () => [
@@ -131,11 +155,25 @@ export const Home: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
+              </div>
+
+              {hasMore && (
+                <div className="mt-8 text-center">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="rounded-xl border border-line bg-white px-6 py-3 text-sm font-semibold text-ink shadow-lift transition-colors hover:border-brand-200 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loadingMore ? "Carregando..." : "Carregar mais produtos"}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

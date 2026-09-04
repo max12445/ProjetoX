@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AxiosError } from "axios";
 import { getProductById, updateProduct } from "../services/productService";
@@ -38,8 +38,23 @@ export const EditProduct: React.FC = () => {
   const [fetching, setFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  const navigateTimeoutRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!id) return;
+    return () => {
+      if (navigateTimeoutRef.current !== null) {
+        window.clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFetching(false);
+      setFetchError("Produto não encontrado.");
+      return;
+    }
 
     let active = true;
 
@@ -82,7 +97,12 @@ export const EditProduct: React.FC = () => {
     try {
       setLoading(true);
 
-      await updateProduct(id!, {
+      if (!id) {
+        setMessage({ text: "Produto não encontrado.", type: "error" });
+        return;
+      }
+
+      await updateProduct(id, {
         title,
         category,
         price: Number(price),
@@ -96,7 +116,7 @@ export const EditProduct: React.FC = () => {
         type: "success",
       });
 
-      setTimeout(() => {
+      navigateTimeoutRef.current = window.setTimeout(() => {
         navigate("/meus-produtos");
       }, 1200);
     } catch (error) {

@@ -193,8 +193,16 @@ export const ProductDetails: React.FC = () => {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity((q) => Math.min(999, q + 1))}
-                  className="rounded-r-xl px-3 py-2 text-muted transition-colors hover:bg-surface hover:text-ink"
+                  onClick={() =>
+                    setQuantity((q) =>
+                      Math.min(
+                        typeof product.stock === "number" ? product.stock : 999,
+                        q + 1
+                      )
+                    )
+                  }
+                  disabled={quantity >= (typeof product.stock === "number" ? product.stock : 999)}
+                  className="rounded-r-xl px-3 py-2 text-muted transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Aumentar quantidade"
                 >
                   <PlusIcon className="h-4 w-4" />

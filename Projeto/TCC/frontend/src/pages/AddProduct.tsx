@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { createProduct } from "../services/productService";
@@ -23,6 +23,16 @@ export const AddProduct: React.FC = () => {
   } | null>(null);
 
   const [loading, setLoading] = useState(false);
+
+  const navigateTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current !== null) {
+        window.clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const categories = [
     { value: "eletronicos", label: "Eletrônicos" },
@@ -66,7 +76,7 @@ export const AddProduct: React.FC = () => {
         type: "success",
       });
 
-      setTimeout(() => {
+      navigateTimeoutRef.current = window.setTimeout(() => {
         navigate("/");
       }, 1500);
     } catch (error) {

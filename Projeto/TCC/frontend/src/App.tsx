@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProductProvider } from "./context/ProductContext";
 import { CartProvider } from "./context/CartContext";
@@ -26,7 +26,7 @@ function App() {
         <CartProvider>
           <ProductProvider>
             <Router>
-              <div className="min-h-screen bg-gray-50 text-gray-900 font-sans flex flex-col">
+              <div className="min-h-screen bg-surface text-ink font-sans flex flex-col">
                 <Navbar />
                 <main className="flex-1">
                   <Routes>
@@ -99,6 +99,7 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </main>
               </div>

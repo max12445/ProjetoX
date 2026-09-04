@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +13,16 @@ export const Login: React.FC = () => {
 
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const navigateTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current !== null) {
+        window.clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +39,7 @@ export const Login: React.FC = () => {
 
       setMessage({ text: "Login realizado com sucesso! Entrando...", type: "success" });
 
-      setTimeout(() => {
+      navigateTimeoutRef.current = window.setTimeout(() => {
         navigate("/");
       }, 1000);
     } catch (error) {
