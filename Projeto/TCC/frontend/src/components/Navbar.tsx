@@ -46,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
             Produtos
           </Link>
 
-          {(user?.role === "comerciante" || user?.role === "admin") && (
+          {user?.role === "comerciante" && (
             <Link
               to="/cadastrar-produto"
               className="hidden rounded-lg px-3 py-2 text-white transition-colors hover:bg-white/15 hover:text-white sm:block"
@@ -55,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
             </Link>
           )}
 
-          {(user?.role === "comerciante" || user?.role === "admin") && (
+          {user?.role === "comerciante" && (
             <Link
               to="/meus-produtos"
               className="hidden rounded-lg px-3 py-2 text-white transition-colors hover:bg-white/15 hover:text-white sm:block"
@@ -64,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
             </Link>
           )}
 
-          {(user?.role === "comerciante" || user?.role === "admin") && (
+          {user?.role === "comerciante" && (
             <Link
               to="/painel"
               className="hidden rounded-lg px-3 py-2 text-white transition-colors hover:bg-white/15 hover:text-white sm:block"
@@ -73,12 +73,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
             </Link>
           )}
 
-          {(user?.role === "comerciante" || user?.role === "admin") && (
+          {user?.role === "comerciante" && (
             <Link
               to="/minhas-vendas"
               className="hidden rounded-lg px-3 py-2 text-white transition-colors hover:bg-white/15 hover:text-white sm:block"
             >
               Minhas Vendas
+            </Link>
+          )}
+
+          {user?.role === "admin" && (
+            <Link
+              to="/admin/dashboard"
+              className="rounded-lg bg-white/15 px-3 py-2 text-white transition-colors hover:bg-white/25"
+            >
+              Resumo do Site
             </Link>
           )}
 

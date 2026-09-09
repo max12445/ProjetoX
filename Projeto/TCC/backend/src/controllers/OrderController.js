@@ -113,14 +113,27 @@ export const getOrders = async (req, res) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
     const skip = (page - 1) * limit;
 
+    const { status, search } = req.query;
+
+    const filter = {};
+    if (status) {
+      filter.status = status;
+    }
+    if (search) {
+      const regex = new RegExp(search, "i");
+      const User = (await import("../models/User.js")).default;
+      const users = await User.find({ $or: [{ name: regex }, { email: regex }] }).select("_id");
+      filter.user = { $in: users.map((u) => u._id) };
+    }
+
     const [orders, total] = await Promise.all([
-      Order.find()
+      Order.find(filter)
         .populate("user", "name email")
         .populate("items.product", "title price images")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
-      Order.countDocuments(),
+      Order.countDocuments(filter),
     ]);
 
     return res.status(200).json({

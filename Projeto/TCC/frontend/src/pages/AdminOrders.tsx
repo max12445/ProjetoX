@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getOrders, updateOrderStatus, type Order } from "../services/orderService";
+import { getOrders, updateOrderStatus, type Order, type OrderFilters } from "../services/orderService";
 import { BadgeStatus } from "../components/BadgeStatus";
 import { EmptyState } from "../components/EmptyState";
 import { PriceTag } from "../components/PriceTag";
 import { formatDate } from "../utils/format";
-import { ChevronLeftIcon, ClockIcon, PackageIcon } from "../components/Icons";
+import { ChevronLeftIcon, ClockIcon, PackageIcon, SearchIcon } from "../components/Icons";
 
 const STATUS_OPTIONS = [
   { value: "pendente", label: "Pendente" },
@@ -23,11 +23,13 @@ export const AdminOrders: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
 
-  const fetchOrders = useCallback(async (page = 1) => {
+  const fetchOrders = useCallback(async (page = 1, filters?: OrderFilters) => {
     try {
       setLoading(true);
-      const data = await getOrders(page);
+      const data = await getOrders(page, 20, filters);
       setOrders(data.orders ?? data.data ?? []);
       setPagination(data.pagination ?? { page: 1, totalPages: 1, total: 0 });
       setError(null);
@@ -42,6 +44,16 @@ export const AdminOrders: React.FC = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrders();
   }, [fetchOrders]);
+
+  const handleFilter = () => {
+    fetchOrders(1, { status: statusFilter || undefined, search: searchFilter || undefined });
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter("");
+    setSearchFilter("");
+    fetchOrders(1);
+  };
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingId(orderId);
@@ -91,6 +103,56 @@ export const AdminOrders: React.FC = () => {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
             <PackageIcon className="h-5 w-5" />
           </div>
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-white p-4 shadow-lift">
+        <div className="flex-1 min-w-[200px]">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
+            Status
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm font-medium text-ink outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+          >
+            <option value="">Todos</option>
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
+            Buscar cliente
+          </label>
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleFilter()}
+              placeholder="Nome ou email..."
+              className="w-full rounded-xl border border-line bg-surface pl-9 pr-3 py-2 text-sm font-medium text-ink outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleFilter}
+            className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            Filtrar
+          </button>
+          <button
+            onClick={handleClearFilters}
+            className="rounded-xl border border-line bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-brand-50 hover:text-brand-700"
+          >
+            Limpar
+          </button>
         </div>
       </div>
 
@@ -201,7 +263,7 @@ export const AdminOrders: React.FC = () => {
                 (page) => (
                   <button
                     key={page}
-                    onClick={() => fetchOrders(page)}
+                    onClick={() => fetchOrders(page, { status: statusFilter || undefined, search: searchFilter || undefined })}
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       page === pagination.page
                         ? "bg-brand-600 text-white shadow-lift"

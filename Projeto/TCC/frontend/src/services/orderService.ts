@@ -63,8 +63,20 @@ export const createOrder = async (data: CreateOrderData): Promise<{ message: str
   return response.data;
 };
 
-export const getOrders = async (page = 1, limit = 20): Promise<PaginatedOrders<Order>> => {
-  const response = await api.get("/pedido", { params: { page, limit } });
+export interface OrderFilters {
+  status?: string;
+  search?: string;
+}
+
+export const getOrders = async (
+  page = 1,
+  limit = 20,
+  filters?: OrderFilters
+): Promise<PaginatedOrders<Order>> => {
+  const params: Record<string, string | number> = { page, limit };
+  if (filters?.status) params.status = filters.status;
+  if (filters?.search) params.search = filters.search;
+  const response = await api.get("/pedido", { params });
   return response.data;
 };
 
